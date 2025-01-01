@@ -20,7 +20,7 @@ if (!$hasCapability_view_edit) {
 }
 
 // Load AMD module
-//$PAGE->requires->js_call_amd('local_organization/units', 'init');
+$PAGE->requires->js_call_amd('tool_disclaimer/disclaimers', 'init');
 // Load CSS file
 $PAGE->requires->css('/admin/tool/disclaimer/css/general.css');
 
@@ -61,8 +61,6 @@ helper::page(
     get_string('disclaimers', 'tool_disclaimer'),
     get_string('disclaimers', 'tool_disclaimer')
 );
-
-$PAGE->set_header(get_string('disclaimers', 'tool_disclaimer'));
 
 echo $OUTPUT->header();
 // Set up the table

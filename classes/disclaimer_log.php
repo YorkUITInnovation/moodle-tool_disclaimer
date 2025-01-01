@@ -30,6 +30,11 @@ class disclaimer_log extends crud {
 	 */
 	private $userid;
 
+    /**
+     * @var int
+     */
+    private $objectid;
+
 	/**
 	 *
 	 *@var int
@@ -102,6 +107,7 @@ class disclaimer_log extends crud {
 
 		$this->disclaimerid = $result->disclaimerid ?? 0;
 		$this->userid = $result->userid ?? 0;
+        $this->objectid = $result->objectid ?? 0;
 		$this->response = $result->response ?? 0;
 		$this->attempt = $result->attempt ?? 0;
 		$this->usermodified = $result->usermodified ?? 0;
@@ -137,6 +143,13 @@ class disclaimer_log extends crud {
 	public function get_userid(){
 		return $this->userid;
 	}
+
+    /**
+     * @return objectid - bigint (18)
+     */
+    public function get_objectid(){
+        return $this->objectid;
+    }
 
 	/**
 	 * @return response - tinyint (2)

@@ -79,6 +79,11 @@ class disclaimer extends crud
     private $publishedend;
 
     /**
+     * @var string
+     */
+    private $redirectto;
+
+    /**
      *
      * @var string
      */
@@ -151,7 +156,6 @@ class disclaimer extends crud
 
         $this->name = $result->name ?? '';
         $this->context = $result->context ?? '';
-        $this->contextpath = $contextpath ?? '';
         $this->excludesite = $result->excludesite ?? 0;
         $this->subject = $result->subject ?? '';
         $this->message = $result->message ?? '';
@@ -159,6 +163,7 @@ class disclaimer extends crud
         $this->published = $result->published ?? 0;
         $this->publishedstart = $result->publishedstart ?? 0;
         $this->publishedend = $result->publishedend ?? 0;
+        $this->redirectto = $result->redirectto ?? '';
         $this->categories = $result->categories ?? '';
         $this->courses = $result->courses ?? '';
         $this->usermodified = $result->usermodified ?? 0;
@@ -172,6 +177,32 @@ class disclaimer extends crud
         if ($this->timemodified) {
             $this->timemodified_hr = userdate($result->timemodified, get_string('strftimedate'));
         }
+    }
+
+    /**
+     * Insert record and roles
+     * @param $data
+     */
+    public function insert_record($data)
+    {
+        global $DB, $USER;
+
+
+        $disclaimer_id = parent::insert_record($data);
+
+        // Add roles
+        $roles = $data->roles;
+        foreach ($roles as $key => $value) {
+            $role = new \stdClass();
+            $role->disclaimerid = $disclaimer_id;
+            $role->role = $value;
+            $role->timecreated = time();
+            $role->timemodified = time();
+            $role->usermodified = $USER->id;
+            $DB->insert_record('tool_disclaimer_role', $role);
+        }
+
+        return $disclaimer_id;
     }
 
     /**
@@ -199,13 +230,20 @@ class disclaimer extends crud
     }
 
     /**
-     * #return  contextpath - varchar(1333)
+     * @return array
+     * @throws \dml_exception
      */
-    public function get_contextpath()
+    public function get_roles()
     {
-        return $this->contextpath;
+        global $DB;
+        $sql = "SELECT * FROM {tool_disclaimer_role} WHERE disclaimerid = ?";
+        $disclaimer_roles = $DB->get_records_sql($sql, array($this->id));
+        $roles = [];
+        foreach($disclaimer_roles as $role) {
+            $roles[] = $role->role;
+        }
+        return $roles;
     }
-
     /**
      * @return excludesite - tinyint (2)
      */
@@ -264,6 +302,14 @@ class disclaimer extends crud
     public function get_publishedend(): int
     {
         return $this->publishedend;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_redirectto(): string
+    {
+        return $this->redirectto;
     }
 
     /**

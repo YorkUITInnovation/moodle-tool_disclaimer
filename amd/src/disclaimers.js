@@ -16,15 +16,15 @@ function deleteDisclaimer() {
             // Get the data id attribute value
             var id = this.getAttribute('data-id');
             var row = this.closest('tr');
-            var delete_string = getString('delete', 'local_organization');
-            var delete_unit = getString('delete_unit', 'local_organization');
-            var cancel = getString('cancel', 'local_organization');
-            var could_not_delete_unit = getString('could_not_delete_unit', 'local_organization');
+            var delete_string = getString('delete', 'tool_disclaimer');
+            var delete_body = getString('delete_disclaimer_help', 'tool_disclaimer');
+            var cancel = getString('cancel', 'tool_disclaimer');
+            var could_not_delete_unit = getString('could_not_delete_disclaimer', 'tool_disclaimer');
             // Notification
-            notification.confirm(delete_string, delete_unit, delete_string, cancel, function () {
+            notification.confirm(delete_string, delete_body, delete_string, cancel, function () {
                 // Delete the record
                 var deleteCampus = ajax.call([{
-                    methodname: 'organization_unit_delete',
+                    methodname: 'tool_disclaimer_delete',
                     args: {
                         id: id
                     }

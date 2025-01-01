@@ -60,7 +60,8 @@ class disclaimer_table extends \table_sql
         $actions = [
             'edit_url' => $CFG->wwwroot . '/admin/tool/disclaimer/edit_disclaimer.php?id=' . $values->id,
             'showEditButtons' => $this->show_edit_buttons,
-            'showDelButtons' => $this->show_delete_buttons
+            'showDelButtons' => $this->show_delete_buttons,
+            'id' => $values->id,
         ];
         return $OUTPUT->render_from_template('tool_disclaimer/disclaimer_table_action_buttons', $actions);
     }
