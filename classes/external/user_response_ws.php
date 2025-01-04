@@ -15,19 +15,23 @@ class tool_disclaimer_user_response_ws extends external_api
             array(
                 'userid' => new external_value(PARAM_INT, 'User id', VALUE_REQUIRED),
                 'disclaimerid' => new external_value(PARAM_INT, 'Disclaimer record id', VALUE_REQUIRED),
-                'response' => new external_value(PARAM_RAW, 'Response: 1,0, NULL', VALUE_OPTIONAL, null),
+                'response' => new external_value(PARAM_INT, 'Response: 0,1,2', VALUE_OPTIONAL, 0),
+                'objectid' => new external_value(PARAM_INT, 'Object id is can be any objectid triggered by an event such as a courseid', VALUE_OPTIONAL, 0),
             )
         );
     }
 
     /**
-     * @param $id
+     * @param $userid
+     * @param $disclaimerid
+     * @param $response
+     * @param $objectid
      * @return true
      * @throws dml_exception
      * @throws invalid_parameter_exception
      * @throws restricted_context_exception
      */
-    public static function response($userid, $disclaimerid, $response = null)
+    public static function response($userid, $disclaimerid, $response = 0, $objectid = 0)
     {
         global $DB;
 
@@ -35,7 +39,8 @@ class tool_disclaimer_user_response_ws extends external_api
         $params = self::validate_parameters(self::response_parameters(), array(
                 'userid' => $userid,
                 'disclaimerid' => $disclaimerid,
-                'response' => $response
+                'response' => $response,
+                'objectid' => $objectid
             )
         );
 
@@ -47,6 +52,7 @@ class tool_disclaimer_user_response_ws extends external_api
             $record->timemodified = time();
             $record->usermodified = $userid;
             $record->attempt = $record->attempt + 1;
+            $record->objectid = $objectid;
             $DB->update_record('tool_disclaimer_log', $record);
         } else {
             // Insert a new record
@@ -54,6 +60,7 @@ class tool_disclaimer_user_response_ws extends external_api
             $record->disclaimerid = $disclaimerid;
             $record->userid = $userid;
             $record->response = $response;
+            $record->objectid = $objectid;
             $record->timecreated = time();
             $record->timemodified = time();
             $record->attempt = 1;

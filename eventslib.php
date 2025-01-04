@@ -26,9 +26,12 @@ function tool_disclaimer_course_viewed($event)
                 if (in_array($role->shortname, $disclaimer_roles)) {
                     $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
                     if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id, $courseid))) {
-                        $early_alert_disclaimer->userid = $USER->id;
-                        $early_alert_disclaimer->objectid = (int)$courseid;
-                        $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($early_alert_disclaimer));
+                        $params = new stdClass();
+                        $params->userid = $USER->id;
+                        $params->objectid = (int)$courseid;
+                        $params->disclaimerid = (int)$early_alert_disclaimer->id;
+
+                        $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($params));
                     }
                 }
             }
@@ -50,25 +53,53 @@ function tool_disclaimer_course_viewed($event)
                 }
             }
         }
-
     }
 }
 
 function tool_disclaimer_earlyalert_viewed($event)
 {
-    global $DB, $USER, $PAGE;
+    global $CFG, $DB, $USER, $PAGE;
     $data = (object)$event->get_data();
 
     $sql = "SELECT * FROM {tool_disclaimer} WHERE context = 'early_alert'";
     $sql .= " AND ((published = 1) OR (NOW() BETWEEN publishedstart AND publishedend))";
 
     if ($early_alert_disclaimer = $DB->get_record_sql($sql)) {
-        $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND response IS NOT NULL";
-        if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id))) {
-            $early_alert_disclaimer->userid = $USER->id;
-            $early_alert_disclaimer->objectid = (int)0;
-            $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($early_alert_disclaimer));
+        // Check if user has already responded to disclaimer
+        $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ?";
+        $user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id));
+        // Check if the user has already responded true to the disclaimer
+        if ($user_responded->response == 1) {
+            return;
+        }
+        // If no record exists, insert a new record
+        if ($user_responded == false) {
+            // Insert new record
+            $user_responded = new stdClass();
+            $user_responded->disclaimerid = $early_alert_disclaimer->id;
+            $user_responded->userid = $USER->id;
+            $user_responded->response = 0;
+            $user_responded->objectid = 0;
+            $user_responded->timemodified = time();
+            $user_responded->timecreated = time();
+            $user_responded->usermodified = $USER->id;
+            $user_responded->attempt = 0;
+            $DB->insert_record('tool_disclaimer_log', $user_responded);
+        }
+        // If user has not responded to disclaimer, display disclaimer
+        if ($user_responded->response == 0) {
+            $params = new stdClass();
+            $params->userid = (int)$USER->id;
+            $params->objectid = 0;
+            $params->disclaimerid = (int)$early_alert_disclaimer->id;
+            $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($params));
+        } else {
+            // If user responded no and a redirect url exists, redirect the user.
+            if ($user_responded->response == 2) {
+                if ($early_alert_disclaimer->redirectto) {
+                    redirect($CFG->wwwroot . $early_alert_disclaimer->redirectto);
+                }
+            }
         }
     }
-
 }

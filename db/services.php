@@ -28,5 +28,14 @@ $functions = array(
         'capabilities' => '',
         'ajax' => true
     ),
+    'tool_disclaimer_get_disclaimer' => array(
+        'classname' => 'tool_disclaimer_ws',
+        'methodname' => 'get_disclaimer',
+        'classpath' => 'admin/tool/disclaimer/classes/external/disclaimer_ws.php',
+        'description' => 'Get disclaimer data',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true
+    ),
 
 );
