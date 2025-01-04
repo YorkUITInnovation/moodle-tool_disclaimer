@@ -7,13 +7,15 @@ $string['could_not_delete_disclaimer'] = 'Error: Could not delete disclaimer';
 $string['course'] = 'Course';
 $string['delete'] = 'Delete';
 $string['delete_disclaimer_help'] = 'Are you sure you want to delete this disclaimer? This will remove the disclaimer, roles and user responses. This action cannot be undone.';
+$string['disclaimer_exists'] = 'A published disclaimer already exists for this context. You can only have one published disclaimer per context.';
 $string['disclaimers'] = 'Disclaimers';
 $string['early_alert'] = 'Early Alert';
 $string['edit'] = 'Edit';
 $string['edit_disclaimer'] = 'Edit Disclaimer';
-$string['exclude_site'] = 'Exclude site pages';
 $string['field_required'] = 'This field is required';
 $string['filter'] = 'Filter';
+$string['front_page_only'] = 'Front page only?';
+$string['front_page_only_help'] = 'Should this disclaimer be shown on the front page only (/my or home)?';
 $string['message'] = 'Message';
 $string['name'] = 'name';
 $string['new'] = 'New';
@@ -28,6 +30,8 @@ $string['redirect_to_url'] = 'Redirect to URL';
 $string['redirect_to_url_help'] = 'If cancelled or declined, the user will be redirected to this URL. Leave blank to remain on the page.';
 $string['subject'] = 'Subject';
 $string['system'] = 'System';
+$string['update_published_status'] = 'Update published disclaimer status';
+$string['use_published_date'] = 'Use date range to publish?';
 $string['yes'] = 'Yes';
 
 

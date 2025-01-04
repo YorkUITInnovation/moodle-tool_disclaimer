@@ -71,12 +71,10 @@ export const init = async (results) => {
  * @param {number} userid
  * @param {number} response
  * @param {number} objectid
- * @param {string} objectid
+ * @param {string} redirectto
  */
 function respond(disclaimerid, userid, response, objectid, redirectto = '') {
-    console.log('respond', disclaimerid, userid, response, objectid, redirectto);
     if (objectid === undefined) {
-        console.log('objectid is undefined');
         objectid = 0;
     }
 
@@ -86,8 +84,6 @@ function respond(disclaimerid, userid, response, objectid, redirectto = '') {
         response: response,
         objectid: objectid
     };
-    console.log('args', JSON.stringify(args)); // Log the JSON string
-
 
     var saveResponse = ajax.call([{
         methodname: 'tool_disclaimer_response',

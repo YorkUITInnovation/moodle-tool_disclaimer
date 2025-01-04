@@ -102,15 +102,28 @@ class edit_disclaimer_form extends moodleform
             get_string('options', 'tool_disclaimer')
         );
 
-        // Add selectyesno element excludesite
+        // Add selectyesno element frontpageonly
         $mform->addElement(
             'selectyesno',
-            'excludesite',
-            get_string('exclude_site', 'tool_disclaimer')
+            'frontpageonly',
+            get_string('front_page_only', 'tool_disclaimer')
         );
         $mform->setType(
-            'excludesite',
+            'frontpageonly',
             PARAM_INT
+        );
+        // Add help button
+        $mform->addHelpButton(
+            'frontpageonly',
+            'front_page_only',
+            'tool_disclaimer'
+        );
+        // Hide frontpageonly id context does not equal course
+        $mform->hideIf(
+            'frontpageonly',
+            'context',
+            'neq',
+            'course'
         );
 
         // Add element redirectto
@@ -151,6 +164,17 @@ class edit_disclaimer_form extends moodleform
             'early_alert'
         );
 
+        // Add element usepublisheddata
+        $mform->addElement(
+            'selectyesno',
+            'usepublisheddate',
+            get_string('use_published_date', 'tool_disclaimer')
+        );
+        $mform->setType(
+            'usepublisheddate',
+            PARAM_INT
+        );
+
 
         // Add element published
         $mform->addElement(
@@ -162,7 +186,20 @@ class edit_disclaimer_form extends moodleform
             'published',
             PARAM_INT
         );
+        // Hide if usepublisheddate is set to yes
+        $mform->hideIf(
+            'published',
+            'usepublisheddate',
+            'eq',
+            1
+        );
 
+        // Add element datetime publishedend
+        $mform->addElement(
+            'date_time_selector',
+            'publishedstart',
+            get_string('publish_from', 'tool_disclaimer')
+        );
 
         $mform->setType(
             'publishedstart',
@@ -171,9 +208,9 @@ class edit_disclaimer_form extends moodleform
         // Ony visible if published is set to no
         $mform->hideIf(
             'publishedstart',
-            'published',
+            'usepublisheddate',
             'eq',
-            1
+            0
         );
 
         // Add element datetime publishedend
@@ -189,14 +226,42 @@ class edit_disclaimer_form extends moodleform
         // Ony visible if published is set to no
         $mform->hideIf(
             'publishedend',
-            'published',
+            'usepublisheddate',
             'eq',
-            1
+            0
         );
 
         // Add action buttons
         $this->add_action_buttons();
 
         $this->set_data($formdata);
+    }
+
+    // Validate form
+    public function validation($new_disclaimer, $files) {
+        global $DB;
+        $errors = [];
+
+        $new_disclaimer = (object)$new_disclaimer;
+
+        // Check to see if a published disclaimer or one with a publishedstart and publishedend are within the same range for the context already exists
+        $sql = "SELECT * 
+                FROM {tool_disclaimer} 
+                WHERE context = ? 
+                AND published = 1";
+       if ($results = $DB->get_records_sql($sql, [$new_disclaimer->context, $new_disclaimer->publishedstart, $new_disclaimer->publishedend])) {
+           foreach( $results as $result) {
+               if ($result->id != $new_disclaimer->id) {
+                   $errors['usepublisheddate'] = get_string('disclaimer_exists', 'tool_disclaimer');
+               }
+           }
+       }
+
+        $number_of_errors = count($errors);
+        if ($number_of_errors == 0) {
+            return true;
+        } else {
+            return $errors;
+        }
     }
 }

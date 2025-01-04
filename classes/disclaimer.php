@@ -42,7 +42,7 @@ class disclaimer extends crud
      *
      * @var int
      */
-    private $excludesite;
+    private $frontpageonly;
 
     /**
      *
@@ -61,6 +61,12 @@ class disclaimer extends crud
      * @var string
      */
     private $messageformat;
+
+    /**
+     *
+     * @var int
+     */
+    private $usepublisheddate;
 
     /**
      *
@@ -156,10 +162,11 @@ class disclaimer extends crud
 
         $this->name = $result->name ?? '';
         $this->context = $result->context ?? '';
-        $this->excludesite = $result->excludesite ?? 0;
+        $this->frontpageonly = $result->frontpageonly ?? 0;
         $this->subject = $result->subject ?? '';
         $this->message = $result->message ?? '';
         $this->messageformat = $result->messageformat ?? '';
+        $this->usepublisheddate = $result->usepublisheddate ?? 0;
         $this->published = $result->published ?? 0;
         $this->publishedstart = $result->publishedstart ?? 0;
         $this->publishedend = $result->publishedend ?? 0;
@@ -187,8 +194,52 @@ class disclaimer extends crud
     {
         global $DB, $USER;
 
+        // If usepublisheddate is set to no, set publishedstart and publishedend to 0
+        if ($data->usepublisheddate == 0) {
+            $data->publishedstart = 0;
+            $data->publishedend = 0;
+        } else {
+            // Set published to 0 if usepublisheddate is set to yes
+            $data->published = 0;
+        }
 
         $disclaimer_id = parent::insert_record($data);
+
+        // Add roles
+        $roles = $data->roles;
+        foreach ($roles as $key => $value) {
+            $role = new \stdClass();
+            $role->disclaimerid = $disclaimer_id;
+            $role->role = $value;
+            $role->timecreated = time();
+            $role->timemodified = time();
+            $role->usermodified = $USER->id;
+            $DB->insert_record('tool_disclaimer_role', $role);
+        }
+
+        return $disclaimer_id;
+    }
+
+    /**
+     * Update record and roles
+     * @param $data
+     */
+    public function update_record($data) {
+        global $DB, $USER;
+
+        // If usepublisheddate is set to no, set publishedstart and publishedend to 0
+        if ($data->usepublisheddate == 0) {
+            $data->publishedstart = 0;
+            $data->publishedend = 0;
+        } else {
+            // Set published to 0 if usepublisheddate is set to yes
+            $data->published = 0;
+        }
+
+        $disclaimer_id = parent::update_record($data);
+
+        // Delete existing roles
+        $DB->delete_records('tool_disclaimer_role', ['disclaimerid' => $disclaimer_id]);
 
         // Add roles
         $roles = $data->roles;
@@ -245,11 +296,15 @@ class disclaimer extends crud
         return $roles;
     }
     /**
-     * @return excludesite - tinyint (2)
+     * @return excludesite - bool
      */
-    public function get_excludesite()
+    public function get_frontpageonly(): bool
     {
-        return $this->excludesite;
+        if ($this->frontpageonly) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -274,6 +329,18 @@ class disclaimer extends crud
     public function get_messageformat()
     {
         return $this->messageformat;
+    }
+
+    /**
+     * @return usepublisheddate - bool
+     */
+    public function get_usepublisheddate(): bool
+    {
+        if ($this->usepublisheddate) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -379,9 +446,9 @@ class disclaimer extends crud
     /**
      * @param Type: tinyint (2)
      */
-    public function set_excludesite($excludesite)
+    public function set_frontpageonly($frontpageonly)
     {
-        $this->excludesite = $excludesite;
+        $this->frontpageonly = $frontpageonly;
     }
 
     /**
@@ -398,6 +465,14 @@ class disclaimer extends crud
     public function set_message($message)
     {
         $this->message = $message;
+    }
+
+    /**
+     * @param Type: tinyint (1)
+     */
+    public function set_usepublisheddate($usepublisheddate)
+    {
+        $this->usepublisheddate = $usepublisheddate;
     }
 
     /**

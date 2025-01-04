@@ -26,7 +26,7 @@ if ($id) {
 } else {
     $formdata = new stdClass();
     $formdata->id = null;
-    $formdata->excludesite = 1;
+    $formdata->frontpageonly = 0;
     $formdata->context = 'course';
     $formdata->contextpath = '/course/view.php';
     $formdata->message = '';

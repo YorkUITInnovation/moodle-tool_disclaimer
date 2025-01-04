@@ -1,7 +1,16 @@
 <?php
 
+/**
+ * @package   tool_disclaimer
+ * @copyright 2025 Patrick Thibaudeau
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 use tool_disclaimer\disclaimer;
 
+/**
+ * Display disclaimer for course
+ * @param $event
+ */
 function tool_disclaimer_course_viewed($event)
 {
     global $DB, $PAGE, $USER;
@@ -56,6 +65,10 @@ function tool_disclaimer_course_viewed($event)
     }
 }
 
+/**
+ * Display disclaimer for early alert
+ * @param $event
+ */
 function tool_disclaimer_earlyalert_viewed($event)
 {
     global $CFG, $DB, $USER, $PAGE;
