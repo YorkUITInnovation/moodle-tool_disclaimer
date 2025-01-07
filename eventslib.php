@@ -46,7 +46,7 @@ function tool_disclaimer_course_viewed($event)
             }
         } else {
             // Is this a site-wide disclaimer?
-            if ($DISCLAIMER->get_excludesite() == 1 && $courseid != 1) {
+            if ($DISCLAIMER->get_frontpageonly() == 1 && $courseid != 1) {
                 $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
                 if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id, $courseid))) {
                     $early_alert_disclaimer->userid = $USER->id;
