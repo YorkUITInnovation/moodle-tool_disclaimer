@@ -33,6 +33,7 @@ $string['system'] = 'System';
 $string['update_published_status'] = 'Update published disclaimer status';
 $string['use_published_date'] = 'Use date range to publish?';
 $string['yes'] = 'Yes';
+$string['test'] = 'Test';
 
 
 // Access privileges
