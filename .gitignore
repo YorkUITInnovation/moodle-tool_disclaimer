@@ -2,3 +2,4 @@
 .idea/
 #ignore all Mac files
 .DS_Store
+/varwwwmoodledatatempfilecache/
