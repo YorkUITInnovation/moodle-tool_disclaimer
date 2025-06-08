@@ -44,7 +44,7 @@ class edit_disclaimer_form extends moodleform
         );
 
         $context_options = [
-//            'course' => get_string('course', 'tool_disclaimer'),
+            'course' => get_string('course', 'tool_disclaimer'),
             'early_alert' => get_string('early_alert', 'tool_disclaimer'),
         ];
         // Add context select element
