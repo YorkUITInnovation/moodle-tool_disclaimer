@@ -13,6 +13,7 @@ export const init = async (results) => {
         title: params.subject,
         body: Templates.render('tool_disclaimer/disclaimer_modal', params),
         footer: Templates.render('tool_disclaimer/modal_buttons', params),
+        large: true,
     });
     // Prevent the modal from being dismissed when clicking outside
     modal.getRoot().modal({
