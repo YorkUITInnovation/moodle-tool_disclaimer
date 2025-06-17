@@ -22,6 +22,20 @@ $id = optional_param('id', 0, PARAM_INT);
 
 if ($id) {
     $formdata = $DB->get_record('tool_disclaimer', ['id' => $id]);
+    $roles = $DB->get_records('tool_disclaimer_role', ['disclaimerid' => $id]);
+    // Create an array with role key and name being the field named role
+    $formdata->roles = [];
+    foreach ($roles as $role) {
+        // Find the role in the roles table
+        $moodle_role = $DB->get_record('role', ['shortname' => $role->role]);
+        if (empty($moodle_role->name)) {
+            $role_name = $role->role;
+        } else {
+            $role_name = $moodle_role->name;
+        }
+
+        $formdata->roles[$role->role] = $role_name;
+    }
 
 } else {
     $formdata = new stdClass();

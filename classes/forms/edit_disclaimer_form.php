@@ -156,6 +156,13 @@ class edit_disclaimer_form extends moodleform
             $role_options
         );
 
+        // Roles is a required field
+        $mform->addRule(
+            'roles',
+            get_string('field_required', 'tool_disclaimer'),
+            'required'
+        );
+
         // Hide if context is early_alert
         $mform->hideIf(
             'roles',
