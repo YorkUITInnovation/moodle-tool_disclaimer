@@ -33,3 +33,29 @@ function tool_disclaimer_pluginfile($course, $cm, $context, $filearea, $args, $f
 
     send_stored_file($file, 86400, 0, $forcedownload); // Options.
 }
+
+/**
+ * Display link in course navigation to disclaimer page
+ */
+function tool_disclaimer_extend_navigation_course(
+    navigation_node $parentnode,
+    stdClass        $course,
+    context_course  $context
+)
+{
+    global $PAGE, $OUTPUT, $USER, $DB;
+
+    // Get disclaimer in table tool_disclaimer_log
+    $disclaimer = $DB->get_record('tool_disclaimer_log', ['userid' => $USER->id, 'objectid' => $course->id], '*', IGNORE_MISSING);
+file_put_contents('/var/www/moodledata/temp/disclaimer.log', print_r($disclaimer, true));
+    // Check if the user has the capability to view disclaimers.
+    if ($disclaimer) {
+        $parentnode->add(
+            get_string('disclaimers', 'tool_disclaimer'),
+            new moodle_url('/admin/tool/disclaimer/edit_my_disclaimer.php', ['id' => $disclaimer->id, 'courseid' => $course->id]),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'tool_disclaimer'
+        );
+    }
+}

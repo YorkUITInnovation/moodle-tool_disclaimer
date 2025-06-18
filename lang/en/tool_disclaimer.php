@@ -1,6 +1,7 @@
 <?php
 
 $string['cancel'] = 'Cancel';
+$string['change_response'] = 'Change Response';
 $string['context'] = 'Context';
 $string['contextpath'] = 'Context path';
 $string['could_not_delete_disclaimer'] = 'Error: Could not delete disclaimer';
@@ -20,7 +21,9 @@ $string['message'] = 'Message';
 $string['name'] = 'name';
 $string['new'] = 'New';
 $string['no'] = 'No';
+$string['not_your_disclaimer'] = 'You are trying to access a disclaimer that does not belong to you.';
 $string['options'] = 'Options';
+$string['original_message'] = 'Original message';
 $string['pluginname'] = 'Disclaimer';
 $string['published'] = 'Published';
 $string['publish_from'] = 'Publish from';
