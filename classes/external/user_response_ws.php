@@ -45,8 +45,8 @@ class tool_disclaimer_user_response_ws extends external_api
         );
 
         // First look to see if record exists in teh local_tool_disclaimer_log table
-        $sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ?";
-        if ($record = $DB->get_record_sql($sql, array($disclaimerid, $userid))) {
+        $sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ?";
+        if ($record = $DB->get_record_sql($sql, array($disclaimerid, $userid, $objectid))) {
             // Update the record
             $record->response = $response;
             $record->timemodified = time();
