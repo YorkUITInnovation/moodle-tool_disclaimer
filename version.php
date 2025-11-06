@@ -28,4 +28,4 @@ $plugin->version   = 2025110600;           // The current module version (Date: 
 $plugin->requires  = 2025041400;            // Requires this Moodle version.
 $plugin->component = 'tool_disclaimer';      // Full name of the plugin (used for diagnostics).
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.0';
+$plugin->release = '1.1.0';
