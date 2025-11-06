@@ -1,5 +1,5 @@
 import notification from 'core/notification';
-import ModalFactory from 'core/modal_factory';
+import ModalFactory from 'core/modal';
 import Templates from 'core/templates';
 import ajax from 'core/ajax';
 import config from 'core/config';
