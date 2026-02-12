@@ -87,8 +87,8 @@ class tool_disclaimer_roles_ws extends external_api
         return new external_multiple_structure(
             new external_single_structure(
                 array(
-                    'value' => new external_value(PARAM_TEXT, 'Role shortname', false),
-                    'label' => new external_value(PARAM_TEXT, 'Role name', true)
+                    'value' => new external_value(PARAM_TEXT, 'Role shortname', VALUE_REQUIRED),
+                    'label' => new external_value(PARAM_TEXT, 'Role name', VALUE_REQUIRED)
                 )
             )
         );

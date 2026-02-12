@@ -44,7 +44,7 @@ class edit_disclaimer_form extends moodleform
         );
 
         $context_options = [
-//            'course' => get_string('course', 'tool_disclaimer'),
+            'course' => get_string('course', 'tool_disclaimer'),
             'early_alert' => get_string('early_alert', 'tool_disclaimer'),
         ];
         // Add context select element
@@ -154,6 +154,13 @@ class edit_disclaimer_form extends moodleform
             get_string('role'),
             $roles,
             $role_options
+        );
+
+        // Roles is a required field
+        $mform->addRule(
+            'roles',
+            get_string('field_required', 'tool_disclaimer'),
+            'required'
         );
 
         // Hide if context is early_alert

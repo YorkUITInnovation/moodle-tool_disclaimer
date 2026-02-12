@@ -14,6 +14,12 @@ use tool_disclaimer\disclaimer;
 function tool_disclaimer_course_viewed($event)
 {
     global $DB, $PAGE, $USER;
+
+    if (is_siteadmin($USER)) {
+        // If the user is a site admin, do not display the disclaimer.
+        return;
+    }
+
     $data = (object)$event->get_data();
 
     $courseid = $data->courseid;
@@ -25,20 +31,23 @@ function tool_disclaimer_course_viewed($event)
     $sql = "SELECT * FROM {tool_disclaimer} WHERE context = 'course'";
     $sql .= " AND ((published = 1) OR (NOW() BETWEEN publishedstart AND publishedend))";
     // Get disclaimer
-    if ($early_alert_disclaimer = $DB->get_record_sql($sql)) {
-        $DISCLAIMER = new disclaimer($early_alert_disclaimer->id);
+    if ($course_disclaimer = $DB->get_record_sql($sql)) {
+        $DISCLAIMER = new disclaimer($course_disclaimer->id);
+
+        $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
+
         $disclaimer_roles = $DISCLAIMER->get_roles();
         // are there any roles to check against?
         if (!empty($disclaimer_roles)) {
             // Check to see if the user has a role that requires the disclaimer
             foreach ($roles as $role) {
                 if (in_array($role->shortname, $disclaimer_roles)) {
-                    $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
-                    if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id, $courseid))) {
+                    $user_responded = $DB->get_record_sql($user_response_sql, array($course_disclaimer->id, $USER->id, $courseid));
+                    if (!$user_responded || $user_responded->response == 0) {
                         $params = new stdClass();
                         $params->userid = $USER->id;
                         $params->objectid = (int)$courseid;
-                        $params->disclaimerid = (int)$early_alert_disclaimer->id;
+                        $params->disclaimerid = (int)$course_disclaimer->id;
 
                         $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($params));
                     }
@@ -47,18 +56,18 @@ function tool_disclaimer_course_viewed($event)
         } else {
             // Is this a site-wide disclaimer?
             if ($DISCLAIMER->get_frontpageonly() == 1 && $courseid != 1) {
-                $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
-                if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id, $courseid))) {
-                    $early_alert_disclaimer->userid = $USER->id;
-                    $early_alert_disclaimer->objectid = (int)$courseid;
-                    $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($early_alert_disclaimer));
+                $user_responded = $DB->get_record_sql($user_response_sql, array($course_disclaimer->id, $USER->id, $courseid));
+                if (!$user_responded || $user_responded->response == 0) {
+                    $course_disclaimer->userid = $USER->id;
+                    $course_disclaimer->objectid = (int)$courseid;
+                    $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($course_disclaimer));
                 }
             } else if ($courseid == 1) {
-                $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
-                if (!$user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id, $courseid))) {
-                    $early_alert_disclaimer->userid = $USER->id;
-                    $early_alert_disclaimer->objectid = (int)$courseid;
-                    $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($early_alert_disclaimer));
+                $user_responded = $DB->get_record_sql($user_response_sql, array($course_disclaimer->id, $USER->id, $courseid));
+                if (!$user_responded || $user_responded->response == 0) {
+                    $course_disclaimer->userid = $USER->id;
+                    $course_disclaimer->objectid = (int)$courseid;
+                    $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', array($course_disclaimer));
                 }
             }
         }
@@ -72,6 +81,12 @@ function tool_disclaimer_course_viewed($event)
 function tool_disclaimer_earlyalert_viewed($event)
 {
     global $CFG, $DB, $USER, $PAGE;
+
+    if (is_siteadmin($USER)) {
+        // If the user is a site admin, do not display the disclaimer.
+        return;
+    }
+
     $data = (object)$event->get_data();
 
     $sql = "SELECT * FROM {tool_disclaimer} WHERE context = 'early_alert'";
