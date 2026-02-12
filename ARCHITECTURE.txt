@@ -1,0 +1,264 @@
+================================================================================
+                    DISCLAIMER TOOL - ARCHITECTURE
+================================================================================
+PLUGIN STRUCTURE
+================================================================================
+Admin Interface Layer:
+  - index.php          → Display disclaimer list with search/filter
+  - edit_disclaimer.php → Form for create/update/delete
+Database Layer:
+  - tool_disclaimer         → Main disclaimer records
+  - tool_disclaimer_role    → Role restrictions per disclaimer
+  - tool_disclaimer_log     → User response audit trail
+Model Classes (classes/):
+  ├── crud.php             → Abstract CRUD operations
+  ├── disclaimer.php       → Single disclaimer model
+  ├── disclaimers.php      → Collection of disclaimers
+  ├── disclaimer_log.php   → Single response record
+  ├── disclaimer_logs.php  → Collection of responses
+  ├── helper.php           → Page setup, file options
+  └── popup_notification.php → Template renderer
+External Services (classes/external/):
+  ├── disclaimer_ws.php       → Delete, get_disclaimer
+  ├── roles_ws.php            → Get role restrictions
+  └── user_response_ws.php    → Log user responses
+Forms (classes/forms/):
+  ├── edit_disclaimer_form.php      → Disclaimer form
+  └── disclaimer_filter_form.php    → Search form
+Tables (classes/tables/):
+  └── disclaimer_table.php          → Data table renderer
+Frontend Layer:
+  ├── JavaScript (amd/src/):
+  │   ├── disclaimer_alert.js  → Modal display logic
+  │   ├── disclaimers.js       → Table interactions
+  │   └── roles.js             → Role selection
+  │
+  ├── Templates (templates/):
+  │   ├── disclaimer_modal.mustache  → Modal content
+  │   └── modal_buttons.mustache     → Modal buttons
+  │
+  └── CSS (css/):
+      └── general.css               → Styling
+Configuration:
+  ├── db/install.xml    → Schema definition
+  ├── db/access.php     → Capabilities
+  ├── db/services.php   → Web service definitions
+  ├── db/events.php     → Event registration
+  ├── settings.php      → Admin menu registration
+  └── version.php       → Plugin metadata
+DATA FLOW DIAGRAM
+================================================================================
+CREATION FLOW:
+  Admin → Edit Form → Validation → Insert to DB → Redirect to List
+   ↓        ↓           ↓              ↓
+  UI      Form      Rules        tool_disclaimer
+          Fields    Check        tool_disclaimer_role
+                                (optional)
+DISPLAY FLOW:
+  User views course
+    ↓
+  course_viewed event
+    ↓
+  eventslib.php::tool_disclaimer_course_viewed()
+    ↓
+  Query tool_disclaimer (context='course', published=1)
+    ↓
+  Check user role restrictions
+    ├─ NO roles set → applies to all
+    └─ Roles set → check user has role
+    ↓
+  Query tool_disclaimer_log for prior response
+    ├─ User accepted (response=1) → skip
+    └─ No response or declined → continue
+    ↓
+  Load JavaScript: tool_disclaimer/disclaimer_alert
+    ↓
+  Create Bootstrap modal
+    ├─ Title: disclaimer.subject
+    ├─ Body: disclaimer.message
+    └─ Buttons: Yes / No / Cancel
+    ↓
+  Wait 2 seconds, enable buttons
+    ↓
+  User clicks button:
+    ├─ YES → response=1, stay on page
+    ├─ NO  → response=0, redirect
+    └─ CANCEL → response=2, redirect
+    ↓
+  AJAX: tool_disclaimer_response web service
+    ↓
+  Insert into tool_disclaimer_log
+    ↓
+  Client: redirect (if configured) or continue
+DELETE FLOW:
+  Admin clicks Delete
+    ↓
+  Confirmation dialog
+    ↓
+  AJAX: tool_disclaimer_delete web service
+    ↓
+  Delete from tool_disclaimer
+  Delete from tool_disclaimer_role
+  Delete from tool_disclaimer_log
+    ↓
+  Return to list
+ROLE RESTRICTIONS
+================================================================================
+If roles are set for a disclaimer:
+  → Only users with those roles see the disclaimer
+If no roles are set:
+  → Applies to all users (except site admins)
+Default roles available:
+  - student
+  - teacher
+  - editingteacher
+  - manager
+  - coursecreator
+  - guest
+  - authenticated
+PUBLICATION CONTROL
+================================================================================
+published field controls if active:
+  published = 1  → Active
+  published = 0  → Inactive
+If usepublisheddate = 1:
+  → Only active between publishedstart and publishedend
+  → publishedstart and publishedend are Unix timestamps
+If usepublisheddate = 0:
+  → published field determines status (ignore dates)
+CONTEXT TYPES
+================================================================================
+course:
+  - Shown when user views a course
+  - frontpageonly controls if shown on front page
+early_alert:
+  - Shown when early alert event triggered
+  - Separate event handler
+RESPONSE VALUES
+================================================================================
+tool_disclaimer_log.response field:
+  0 = Declined / Clicked No / Clicked Cancel
+  1 = Accepted / Clicked Yes
+  2 = Cancelled (treated as decline, redirect triggered)
+  NULL or missing = No response yet
+PERMISSIONS
+================================================================================
+tool/disclaimer:view
+  → View disclaimer list
+  → Access admin page
+tool/disclaimer:edit
+  → Create new disclaimers
+  → Edit existing disclaimers
+tool/disclaimer:delete
+  → Delete disclaimers
+tool/disclaimer:reports
+  → View disclaimer reports (if implemented)
+All require CONTEXT_SYSTEM (site admin level)
+Default: Only Manager role has these capabilities
+WEB SERVICE ARCHITECTURE
+================================================================================
+Enabled in: db/services.php
+Called via: Moodle AJAX (core/ajax module)
+Services:
+1. tool_disclaimer_response
+   - POST: user responds to disclaimer
+   - Logs response to tool_disclaimer_log
+   - Parameters: disclaimerid, userid, response, objectid, attempt
+   - Response: boolean
+2. tool_disclaimer_get_disclaimer
+   - GET: retrieve disclaimer details
+   - Parameters: id (disclaimer ID)
+   - Response: disclaimer object
+3. tool_disclaimer_get_role
+   - GET: retrieve roles for disclaimer
+   - Parameters: disclaimerid
+   - Response: array of roles
+4. tool_disclaimer_delete
+   - POST: delete disclaimer
+   - Cascades to: tool_disclaimer_role, tool_disclaimer_log
+   - Parameters: id
+   - Response: boolean
+EVENT INTEGRATION
+================================================================================
+Registered event handlers:
+1. core\event\course_viewed
+   Handler: tool_disclaimer_course_viewed()
+   Location: eventslib.php
+   Action: Display course context disclaimers
+2. Other events (early alert, etc.)
+   Handler: tool_disclaimer_early_alert()
+   Location: eventslib.php
+CAPABILITIES HIERARCHY
+================================================================================
+User views course
+  ↓
+Is user site admin? → YES → Skip all disclaimers
+  ↓ NO
+Check user capabilities
+  ↓
+Is user manager? (can edit disclaimers)
+  → Usually displayed but not required to respond
+  ↓
+Normal user → Must respond to disclaimers
+FILE STORAGE
+================================================================================
+Component: tool_disclaimer
+File area: assets
+Item ID: disclaimer.id
+Served via: lib.php::tool_disclaimer_pluginfile()
+Cache duration: 86400 seconds (24 hours)
+Security:
+  - Context level must be CONTEXT_SYSTEM
+  - Only tool_disclaimer file area accepted
+  - Requires valid file reference
+CLASS DEPENDENCIES
+================================================================================
+disclaimer.php
+  ├── extends: crud
+  ├── uses: $DB (global)
+  ├── methods: get_roles(), get_frontpageonly(), standard CRUD
+disclaimers.php
+  ├── uses: $DB
+  ├── loads: all tool_disclaimer records
+  └── provides: select arrays for forms
+disclaimer_log.php
+  ├── extends: crud
+  ├── used for: logging user responses
+  └── queries: tool_disclaimer_log table
+helper.php
+  ├── static methods: page(), loadJQueryJS()
+  ├── uses: $PAGE, $CFG, jQuery, DataTables
+  └── external deps: local_organization (if available)
+edit_disclaimer_form.php
+  ├── extends: moodleform
+  ├── fields: name, context, message (editor), roles, dates, etc.
+  ├── validations: required fields, date ranges
+  └── uses: file_prepare_standard_editor()
+disclaimer_table.php
+  ├── extends: table_sql
+  ├── columns: name, context, published, actions
+  ├── SQL: flexible WHERE clause
+  └── sortable columns
+AJAX/JAVASCRIPT FLOW
+================================================================================
+Page Load:
+  1. Event triggers (course_viewed)
+  2. eventslib.php checks if modal needed
+  3. If yes: $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', params)
+  4. Browser loads AMD module
+disclaimer_alert.js::init():
+  1. Receive params (disclaimerid, userid, objectid, redirectto)
+  2. Call AJAX: tool_disclaimer_get_disclaimer
+  3. Create modal with result
+  4. Attach button listeners
+  5. When button clicked: call AJAX: tool_disclaimer_response
+  6. Hide modal
+  7. Redirect (if configured)
+SCHEDULED TASKS
+================================================================================
+Location: classes/task/update_published_status.php
+Task: update_published_status
+  - Scheduled periodic task
+  - Updates published status based on date ranges
+  - Runs on cron
+================================================================================
