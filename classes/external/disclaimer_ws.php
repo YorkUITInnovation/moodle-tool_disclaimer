@@ -108,7 +108,6 @@ class tool_disclaimer_ws extends external_api
         $disclaimer['message'] = \file_rewrite_pluginfile_urls($disclaimer_record->message, 'pluginfile.php', $context->id, 'tool_disclaimer', 'assets', $disclaimer_record->id);
         $disclaimer['redirectto'] = $disclaimer_record->redirectto;
         $disclaimer['roles'] = $roles;
-file_put_contents('/var/www/moodledata/temp/debug_disclaimer.txt', print_r($disclaimer, true));
         return $disclaimer;
     }
 
@@ -119,7 +118,7 @@ file_put_contents('/var/www/moodledata/temp/debug_disclaimer.txt', print_r($disc
 
           return  new external_single_structure(
                 array(
-                    'id' => new external_value(PARAM_INT, 'Disclaimer id', VALUE_OPTIONAL),
+                    'id' => new external_value(PARAM_INT, 'Disclaimer id', VALUE_REQUIRED),
                     'name' => new external_value(PARAM_TEXT, 'name', VALUE_REQUIRED),
                     'subject' => new external_value(PARAM_TEXT, 'name', VALUE_REQUIRED),
                     'message' => new external_value(PARAM_RAW, 'name', VALUE_REQUIRED),

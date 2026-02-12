@@ -4,6 +4,10 @@ import Templates from 'core/templates';
 import ajax from 'core/ajax';
 import config from 'core/config';
 
+/**
+ * Initializes the disclaimer modal, waits for buttons, and attaches event listeners.
+ * @param {Object} results - The results object containing disclaimer and user info.
+ */
 export const init = async (results) => {
 
    var params = await fetchData(results.disclaimerid, results.userid);
@@ -22,46 +26,56 @@ export const init = async (results) => {
     });
     modal.show();
 
+    let isModalClosing = false;
+    // Define the event handler function so we can remove it later
+    const buttonClickHandler = (event) => {
+        // Only handle clicks if modal is still open
+        if (isModalClosing) {
+            return;
+        }
+
+        // Check if the clicked element or any ancestor matches our selectors
+        if (event.target.closest('#btn-tool-disclaimer-cancel') ||
+            event.target.closest('[data-action="hide"]')) {
+            respond(params.id, params.userid, 0, params.objectid, params.redirectto);
+            hideModal();
+        } else if (event.target.closest('#btn-tool-disclaimer-yes')) {
+            respond(params.id, params.userid, 1, params.objectid, '');
+            hideModal();
+        } else if (event.target.closest('#btn-tool-disclaimer-no')) {
+            respond(params.id, params.userid, 2, params.objectid, params.redirectto);
+            hideModal();
+        }
+    };
+
     /**
-     * Hide the modal and remove the backdrop
+     * Hide and destroy the modal simply
      */
     function hideModal() {
-        modal.destroy();
-        // Remove the backdrop manually using plain JavaScript
-        var backdrops = document.getElementsByClassName('modal-backdrop');
-        while (backdrops[0]) {
-            backdrops[0].parentNode.removeChild(backdrops[0]);
+        if (isModalClosing) {
+            return;
         }
+        isModalClosing = true;
+
+        // Remove the event listener to prevent multiple calls
+        document.body.removeEventListener('click', buttonClickHandler);
+
+        // Simple approach - just destroy the modal
+        modal.destroy();
+
+        // Clean up any leftover backdrop elements
+        setTimeout(() => {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }, 50);
     }
 
-    // Wait 2 seconds to activate teh buttons
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Add the event listener
+    document.body.addEventListener('click', buttonClickHandler);
 
-    // If the user clicks the button with attribute data-action="hide", the modal will be hidden
-    await document.querySelector('[data-action="hide"]').addEventListener('click', () => {
-        respond(params.id, params.userid, 0, params.objectid, params.redirectto);
-        hideModal();
-    });
-
-    // When button with class btn-tool-disclaimer-cancel is clicked, the modal will be hidden
-    await document.getElementById('btn-tool-disclaimer-cancel').addEventListener('click', () => {
-        respond(params.id, params.userid, 0, params.objectid, params.redirectto);
-        hideModal();
-    });
-
-    // When Button with id btn-tool-disclaimer-yes is clicked, the modal will be hidden
-    await document.getElementById('btn-tool-disclaimer-yes').addEventListener('click', () => {
-        respond(params.id, params.userid, 1, params.objectid, '');
-        hideModal();
-    });
-
-    // When Button with id btn-tool-disclaimer-no is clicked, the modal will be hidden
-    await document.getElementById('btn-tool-disclaimer-no').addEventListener('click', () => {
-        respond(params.id, params.userid, 2, params.objectid, params.redirectto);
-        hideModal();
-    });
-
-    // Set paramaters for template
+    // Set parameters for template
 
 
 };
@@ -100,10 +114,10 @@ function respond(disclaimerid, userid, response, objectid, redirectto = '') {
 }
 
 /**
- *
- * @param {int} disclaimerid
- * @param {int} userid
- * @returns {Promise<unknown>}
+ * Fetches disclaimer data for a given disclaimer and user.
+ * @param {number} disclaimerid - The disclaimer ID.
+ * @param {number} userid - The user ID.
+ * @returns {Promise<Object>} Resolves with the disclaimer data object.
  */
 function fetchData (disclaimerid, userid) {
     return new Promise((resolve, reject) => {
