@@ -4,8 +4,10 @@
 PLUGIN STRUCTURE
 ================================================================================
 Admin Interface Layer:
-  - index.php          → Display disclaimer list with search/filter
-  - edit_disclaimer.php → Form for create/update/delete
+  - index.php              → Display disclaimer list with search/filter
+  - edit_disclaimer.php    → Form for create/update/delete
+  - user_responses.php     → Display/manage user responses with search/filter
+  - reset_response.php     → Confirmation page for resetting user responses
 Database Layer:
   - tool_disclaimer         → Main disclaimer records
   - tool_disclaimer_role    → Role restrictions per disclaimer
@@ -23,19 +25,23 @@ External Services (classes/external/):
   ├── roles_ws.php            → Get role restrictions
   └── user_response_ws.php    → Log user responses
 Forms (classes/forms/):
-  ├── edit_disclaimer_form.php      → Disclaimer form
-  └── disclaimer_filter_form.php    → Search form
+  ├── edit_disclaimer_form.php      → Disclaimer creation/edit form
+  ├── disclaimer_filter_form.php    → Disclaimer search/filter form
+  └── user_response_filter_form.php → User response search/filter form
 Tables (classes/tables/):
-  └── disclaimer_table.php          → Data table renderer
+  ├── disclaimer_table.php          → Disclaimer data table renderer
+  └── user_response_table.php       → User response data table renderer
 Frontend Layer:
   ├── JavaScript (amd/src/):
   │   ├── disclaimer_alert.js  → Modal display logic
   │   ├── disclaimers.js       → Table interactions
-  │   └── roles.js             → Role selection
+  │   ├── roles.js             → Role selection
+  │   └── user_responses.js    → User responses table interactions
   │
   ├── Templates (templates/):
-  │   ├── disclaimer_modal.mustache  → Modal content
-  │   └── modal_buttons.mustache     → Modal buttons
+  │   ├── disclaimer_modal.mustache              → Modal content
+  │   ├── modal_buttons.mustache                 → Modal buttons
+  │   └── user_response_action_buttons.mustache  → Reset action button
   │
   └── CSS (css/):
       └── general.css               → Styling
@@ -102,7 +108,165 @@ DELETE FLOW:
   Delete from tool_disclaimer_log
     ↓
   Return to list
-ROLE RESTRICTIONS
+USER RESPONSES MANAGEMENT FLOW
+================================================================================
+Purpose: Allow admins to search for users, view their responses to disclaimers,
+         and reset responses if users mistakenly declined.
+Access: Only users with tool/disclaimer:edit capability
+Location: /admin/tool/disclaimer/user_responses.php
+Search/Filter Flow:
+  1. Admin visits user_responses.php
+  2. Form displays with search/filter options:
+     - User ID (exact match)
+     - First Name (partial, case-insensitive)
+     - Last Name (partial, case-insensitive)
+     - Context (dropdown: all, course, early_alert)
+     - Response Status (dropdown: all, accepted, declined)
+  3. Admin enters search criteria
+  4. Form validates and sanitizes input
+     - User ID: PARAM_INT (numeric only)
+     - Names: PARAM_TEXT (sanitized)
+     - Context: PARAM_ALPHA (alphanumeric only)
+     - Response: PARAM_INT (0 or 1)
+  5. Query executes with parameterized SQL
+     SELECT fields FROM tool_disclaimer_log dl
+     JOIN user u ON u.id = dl.userid
+     JOIN tool_disclaimer d ON d.id = dl.disclaimerid
+     WHERE conditions
+  6. Results display in sortable, paginated table
+  7. Table columns:
+     - User ID
+     - First Name
+     - Last Name
+     - Email
+     - Disclaimer Name
+     - Context
+     - Response Status (badge: green=accepted, red=declined)
+     - Attempt Count
+     - Response Date (formatted)
+     - Actions (Reset button)
+Reset Response Flow:
+  1. Admin clicks "Reset" button on user response row
+  2. Browser navigates to: /admin/tool/disclaimer/reset_response.php?id={logid}
+  3. Page displays confirmation with details:
+     - User name and email
+     - Disclaimer name
+     - Disclaimer context
+  4. Admin clicks "Continue" to confirm
+  5. Server validates:
+     - confirm_sesskey() → CSRF protection
+     - require_capability() → Authorization check
+     - record exists → Verify log entry
+  6. DELETE FROM tool_disclaimer_log WHERE id = {logid}
+  7. Redirect to user_responses.php with success notification
+  8. User will see disclaimer again on next trigger event
+Database Queries (User Responses):
+  Table: tool_disclaimer_log
+    - id: Auto-increment primary key
+    - disclaimerid: FK to tool_disclaimer.id
+    - userid: FK to user.id
+    - objectid: Context-specific ID (course_id for course context)
+    - response: 0=declined, 1=accepted, 2=cancelled
+    - attempt: Response attempt counter
+    - timecreated: Unix timestamp of response
+    - usermodified: ID of admin who modified (if reset)
+  Index: disclaimerid for fast lookups
+Security Measures (User Responses):
+  1. Authentication:
+     - require_login() on all pages
+     - No guest access
+  2. Authorization:
+     - require_capability('tool/disclaimer:edit', $context)
+     - System context only
+     - Teachers/students blocked
+  3. Input Validation:
+     - required_param() for mandatory params
+     - optional_param() with proper PARAM types
+     - Type enforcement: INT, TEXT, ALPHA
+  4. SQL Injection Prevention:
+     - Parameterized queries (named placeholders)
+     - $DB->sql_like_escape() for LIKE queries
+     - No raw SQL concatenation
+  5. XSS Prevention:
+     - format_string() for user data
+     - fullname() for user names
+     - html_writer::tag() for HTML generation
+     - Mustache auto-escaping
+  6. CSRF Protection:
+     - confirm_sesskey() on reset action
+     - sesskey() in all action URLs
+     - Two-step confirmation
+Files and Classes (User Responses):
+  user_responses.php
+    - Main page for searching/viewing user responses
+    - Builds dynamic SQL with filters
+    - Displays user_response_table
+    - Uses user_response_filter_form
+  reset_response.php
+    - Confirmation page for reset action
+    - Verifies record exists (MUST_EXIST)
+    - Validates session key
+    - Deletes log entry
+    - Shows success notification
+  user_response_filter_form.php (classes/forms/)
+    - Extends moodleform
+    - Fields: userid, firstname, lastname, context, response
+    - Validation: all inputs sanitized
+    - Form submission handled
+  user_response_table.php (classes/tables/)
+    - Extends table_sql
+    - Columns: userid, firstname, lastname, email, disclaimername,
+              context, response, attempt, timecreated, actions
+    - Sortable by default on timecreated DESC
+    - Column formatters:
+      * col_response() → Badge styling
+      * col_timecreated() → Date formatting
+      * col_actions() → Reset button template
+    - Column CSS classes for alignment
+  user_response_action_buttons.mustache (templates/)
+    - Renders reset action button
+    - Bootstrap 4/5 compatible classes
+    - Responsive: icon-only on mobile, text on desktop
+    - Accessibility: ARIA labels
+Capabilities (User Responses):
+  tool/disclaimer:edit (required)
+    - Default: Manager role
+    - Can access user responses page
+    - Can reset user responses
+    - Can view all user data in responses
+Navigation (User Responses):
+  Site Administration → Courses → Disclaimers → User Responses
+  URL: /admin/tool/disclaimer/user_responses.php
+Admin Menu Structure:
+  Courses
+    ├── Disclaimers (category)
+    │   ├── Disclaimers (main management, requires tool/disclaimer:view)
+    │   └── User Responses (response management, requires tool/disclaimer:edit)
+    └── Other items...
+Use Cases:
+  1. User mistakenly declined disclaimer
+     → Admin searches for user
+     → Finds response with status "Declined"
+     → Clicks Reset
+     → Confirms action
+     → User response deleted from log
+     → User will see disclaimer on next trigger
+  2. Early alert disclaimer response audit
+     → Admin filters by context="early_alert"
+     → Views all teacher responses
+     → Can reset specific responses if needed
+  3. Course disclaimer compliance check
+     → Admin filters by context="course" AND response="declined"
+     → Sees which users declined course disclaimers
+     → Can investigate and reset if appropriate
+Performance Considerations (User Responses):
+  - JOIN query on 3 tables (optimized with proper indexes)
+  - WHERE clause filters reduce result set before pagination
+  - Pagination: 20 records per page default
+  - Column sorting handled server-side
+  - No N+1 queries (single SELECT fetches all needed data)
+  - Sortable columns use indexed fields
+================================================================================
 ================================================================================
 If roles are set for a disclaimer:
   → Only users with those roles see the disclaimer
