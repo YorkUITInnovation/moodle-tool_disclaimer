@@ -20,7 +20,7 @@
  * This page allows administrators to reset a user's response to a disclaimer.
  *
  * @package    tool_disclaimer
- * @copyright  2026 Your Name
+ * @copyright  2026 ED&IT York University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -18,7 +18,7 @@
  * User response table for displaying user disclaimer responses.
  *
  * @package    tool_disclaimer
- * @copyright  2026 Your Name
+ * @copyright  2026 ED&IT York University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +32,7 @@ require_once($CFG->libdir . '/tablelib.php');
  * Table class for displaying user responses to disclaimers.
  *
  * @package    tool_disclaimer
- * @copyright  2026 Your Name
+ * @copyright  2026 ED&IT York University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class user_response_table extends \table_sql {
