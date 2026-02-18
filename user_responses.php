@@ -33,11 +33,26 @@ require_login();
 
 $context = context_system::instance();
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/admin/tool/disclaimer/user_responses.php'));
 $PAGE->set_pagelayout('admin');
 
 // Capability check - only admins who can edit disclaimers.
 require_capability('tool/disclaimer:edit', $context);
+
+// Get filter parameters - properly sanitized.
+$userid = optional_param('userid', 0, PARAM_INT);
+$firstname = optional_param('firstname', '', PARAM_TEXT);
+$lastname = optional_param('lastname', '', PARAM_TEXT);
+$disclaimercontext = optional_param('context', '', PARAM_ALPHA);
+$responsestatus = optional_param('response', -1, PARAM_INT);
+
+// Set page URL with all filter parameters for pagination to work correctly.
+$PAGE->set_url(new moodle_url('/admin/tool/disclaimer/user_responses.php', [
+    'userid' => $userid,
+    'firstname' => $firstname,
+    'lastname' => $lastname,
+    'context' => $disclaimercontext,
+    'response' => $responsestatus
+]));
 
 // Set page details.
 $PAGE->set_title(get_string('user_responses', 'tool_disclaimer'));
@@ -45,13 +60,6 @@ $PAGE->set_heading(get_string('user_responses', 'tool_disclaimer'));
 
 // Load AMD module.
 $PAGE->requires->js_call_amd('tool_disclaimer/user_responses', 'init');
-
-// Get filter parameters - properly sanitized.
-$userid = optional_param('userid', 0, PARAM_INT);
-$firstname = optional_param('firstname', '', PARAM_TEXT);
-$lastname = optional_param('lastname', '', PARAM_TEXT);
-$disclaimercontext = optional_param('context', '', PARAM_ALPHA);
-$responsestatus = optional_param('response', '', PARAM_INT);
 
 // Prepare form data.
 $formdata = new stdClass();
@@ -67,12 +75,14 @@ $mform = new user_response_filter_form(null, ['formdata' => $formdata]);
 if ($mform->is_cancelled()) {
     redirect(new moodle_url('/admin/tool/disclaimer/user_responses.php'));
 } else if ($data = $mform->get_data()) {
-    // Update filter parameters from form data.
-    $userid = $data->userid ?? 0;
-    $firstname = $data->firstname ?? '';
-    $lastname = $data->lastname ?? '';
-    $disclaimercontext = $data->context ?? '';
-    $responsestatus = $data->response ?? '';
+    // Redirect with the new filter parameters (POST-REDIRECT-GET pattern).
+    redirect(new moodle_url('/admin/tool/disclaimer/user_responses.php', [
+        'userid' => $data->userid ?? 0,
+        'firstname' => $data->firstname ?? '',
+        'lastname' => $data->lastname ?? '',
+        'context' => $data->context ?? '',
+        'response' => $data->response ?? -1
+    ]));
 }
 
 // Create table instance.
@@ -102,7 +112,7 @@ if (!empty($disclaimercontext)) {
     $params['context'] = $disclaimercontext;
 }
 
-if ($responsestatus !== '') {
+if ($responsestatus >= 0) {
     $sqlwhere[] = "dl.response = :response";
     $params['response'] = $responsestatus;
 }

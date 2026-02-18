@@ -51,7 +51,7 @@ class user_response_filter_form extends moodleform
         );
         // Response status dropdown
         $responses = [
-            '' => get_string('all'),
+            '-1' => get_string('all'),
             '1' => get_string('accepted', 'tool_disclaimer'),
             '0' => get_string('declined', 'tool_disclaimer')
         ];
