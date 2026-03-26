@@ -54,4 +54,18 @@ $string['role_non-editing_teacher'] = 'Non-editing teacher';
 $string['role_student'] = 'Student';
 $string['role_teacher'] = 'Teacher';
 
+/**
+ * Privacy
+ */
+$string['privacy:metadata:tool_disclaimer'] = 'The Disclaimer tool stores information about disclaimers, including which user last modified each disclaimer.';
+$string['privacy:metadata:tool_disclaimer:usermodified'] = 'The ID of the user who last modified the disclaimer.';
+$string['privacy:metadata:tool_disclaimer_role'] = 'The Disclaimer tool stores role assignments for disclaimers, including which user last modified each assignment.';
+$string['privacy:metadata:tool_disclaimer_role:usermodified'] = 'The ID of the user who last modified the role assignment.';
+$string['privacy:metadata:tool_disclaimer_log'] = 'The Disclaimer tool stores user responses to disclaimers, including the user who responded and who last modified the log entry.';
+$string['privacy:metadata:tool_disclaimer_log:userid'] = 'The ID of the user who responded to the disclaimer.';
+$string['privacy:metadata:tool_disclaimer_log:usermodified'] = 'The ID of the user who last modified the log entry.';
 
+// Privacy export paths
+$string['privacy:disclaimers'] = 'Disclaimers';
+$string['privacy:roles'] = 'Roles';
+$string['privacy:userresponses'] = 'User Responses';
