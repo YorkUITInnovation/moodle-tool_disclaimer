@@ -41,5 +41,10 @@ function xmldb_tool_disclaimer_upgrade($oldversion)
         upgrade_plugin_savepoint(true, 2025010400.01, 'tool', 'disclaimer');
     }
 
+    if ($oldversion < 2026041700) {
+        // add the acknowledgement_alert AMD module via the version bump.
+        upgrade_plugin_savepoint(true, 2026041700, 'tool', 'disclaimer');
+    }
+
     return true;
 }

@@ -1,0 +1,17 @@
+{{!
+    Template for the acknowledgement modal footer — single OK button only.
+    Used when disclaimer context = 'acknowledgement'.
+
+    Context variables:
+    - userid: int
+    - disclaimerid: int
+}}
+<div class="d-flex justify-content-end">
+    <button id="btn-tool-disclaimer-ok"
+            type="button"
+            class="btn btn-primary"
+            data-userid="{{userid}}"
+            data-disclaimerid="{{disclaimerid}}">
+        {{#str}}ok, tool_disclaimer{{/str}}
+    </button>
+</div>

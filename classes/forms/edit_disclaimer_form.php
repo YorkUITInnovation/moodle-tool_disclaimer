@@ -46,6 +46,7 @@ class edit_disclaimer_form extends moodleform
         $context_options = [
             'course' => get_string('course', 'tool_disclaimer'),
             'early_alert' => get_string('early_alert', 'tool_disclaimer'),
+            'acknowledgement' => get_string('acknowledgement', 'tool_disclaimer'),
         ];
         // Add context select element
         $mform->addElement(
@@ -58,6 +59,17 @@ class edit_disclaimer_form extends moodleform
             'context',
             PARAM_TEXT
         );
+        // Add help text for the acknowledgement type so admins understand it.
+        $mform->addElement(
+            'static',
+            'acknowledgement_context_help',
+            '',
+            '<div class="alert alert-info mt-1 mb-2 py-2 small">'
+            . get_string('acknowledgement_context_help', 'tool_disclaimer')
+            . '</div>'
+        );
+        // Only show the help notice when acknowledgement is selected.
+        $mform->hideIf('acknowledgement_context_help', 'context', 'neq', 'acknowledgement');
 
         // Add subject element
         $mform->addElement(
@@ -118,7 +130,7 @@ class edit_disclaimer_form extends moodleform
             'front_page_only',
             'tool_disclaimer'
         );
-        // Hide frontpageonly id context does not equal course
+        // Hide frontpageonly if context does not equal course.
         $mform->hideIf(
             'frontpageonly',
             'context',
@@ -143,6 +155,8 @@ class edit_disclaimer_form extends moodleform
             'redirect_to_url',
             'tool_disclaimer'
         );
+        // Acknowledgement type never redirects — OK just closes the modal.
+        $mform->hideIf('redirectto', 'context', 'eq', 'acknowledgement');
 
         // Get role data
         $role_options = ['multiple' => true, 'ajax' => 'tool_disclaimer/roles',   'noselectionstring' => get_string('role')];
@@ -156,19 +170,22 @@ class edit_disclaimer_form extends moodleform
             $role_options
         );
 
-        // Roles is a required field
-        $mform->addRule(
-            'roles',
-            get_string('field_required', 'tool_disclaimer'),
-            'required'
-        );
+        // Roles is a required field only for course/early_alert context (not acknowledgement).
+        // We handle this in the validation() method instead of addRule() to respect hideIf.
+        // $mform->addRule('roles', ...);
 
-        // Hide if context is early_alert
+        // Hide if context is early_alert or acknowledgement — no role filter needed.
         $mform->hideIf(
             'roles',
             'context',
             'eq',
             'early_alert'
+        );
+        $mform->hideIf(
+            'roles',
+            'context',
+            'eq',
+            'acknowledgement'
         );
 
         // Add element usepublisheddata
@@ -251,13 +268,18 @@ class edit_disclaimer_form extends moodleform
 
         $new_disclaimer = (object)$new_disclaimer;
 
-        // Check to see if a published disclaimer or one with a publishedstart and publishedend are within the same range for the context already exists
+        // Roles are required for course context only (not acknowledgement or early_alert).
+        if ($new_disclaimer->context === 'course' && empty($new_disclaimer->roles)) {
+            $errors['roles'] = get_string('field_required', 'tool_disclaimer');
+        }
+
+        // Check to see if a published disclaimer already exists for this context.
         $sql = "SELECT * 
                 FROM {tool_disclaimer} 
                 WHERE context = ? 
                 AND published = 1";
-       if ($results = $DB->get_records_sql($sql, [$new_disclaimer->context, $new_disclaimer->publishedstart, $new_disclaimer->publishedend])) {
-           foreach( $results as $result) {
+       if ($results = $DB->get_records_sql($sql, [$new_disclaimer->context])) {
+           foreach($results as $result) {
                if ($result->id != $new_disclaimer->id) {
                    $errors['usepublisheddate'] = get_string('disclaimer_exists', 'tool_disclaimer');
                }

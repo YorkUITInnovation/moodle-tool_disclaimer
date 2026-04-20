@@ -205,8 +205,8 @@ class disclaimer extends crud
 
         $disclaimer_id = parent::insert_record($data);
 
-        // Add roles
-        $roles = $data->roles;
+        // Add roles (acknowledgement type has no role filter — skip).
+        $roles = $data->roles ?? [];
         foreach ($roles as $key => $value) {
             $role = new \stdClass();
             $role->disclaimerid = $disclaimer_id;
@@ -241,8 +241,8 @@ class disclaimer extends crud
         // Delete existing roles
         $DB->delete_records('tool_disclaimer_role', ['disclaimerid' => $disclaimer_id]);
 
-        // Add roles
-        $roles = $data->roles;
+        // Add roles (acknowledgement type has no role filter — skip if empty).
+        $roles = $data->roles ?? [];
         foreach ($roles as $key => $value) {
             $role = new \stdClass();
             $role->disclaimerid = $disclaimer_id;
