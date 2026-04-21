@@ -30,21 +30,28 @@ require_once($CFG->libdir . '/tablelib.php');
 
 /**
  * Table class for displaying user responses to disclaimers.
+ *
+ * @package    tool_disclaimer
+ * @copyright  2026 ED&IT York University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class user_response_table extends \table_sql {
 
     /**
      * Constructor.
+     * Constructor for user_response_table.
      *
      * @param string $uniqueid Unique identifier for the table.
      */
     public function __construct($uniqueid) {
         parent::__construct($uniqueid);
 
+        // Define the columns to be displayed.
         $columns = ['userid', 'firstname', 'lastname', 'email', 'disclaimername',
                     'context', 'response', 'attempt', 'timecreated', 'actions'];
         $this->define_columns($columns);
 
+        // Define the headers for the columns.
         $headers = [
             get_string('userid', 'tool_disclaimer'),
             get_string('firstname'),
@@ -59,9 +66,11 @@ class user_response_table extends \table_sql {
         ];
         $this->define_headers($headers);
 
+        // Make table sortable.
         $this->sortable(true, 'timecreated', SORT_DESC);
         $this->no_sorting('actions');
 
+        // Don't allow wrapping for better display.
         $this->column_class('userid', 'text-center');
         $this->column_class('response', 'text-center');
         $this->column_class('attempt', 'text-center');

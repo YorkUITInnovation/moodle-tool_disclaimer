@@ -58,6 +58,9 @@ $PAGE->set_url(new moodle_url('/admin/tool/disclaimer/user_responses.php', [
 $PAGE->set_title(get_string('user_responses', 'tool_disclaimer'));
 $PAGE->set_heading(get_string('user_responses', 'tool_disclaimer'));
 
+// Load AMD module.
+$PAGE->requires->js_call_amd('tool_disclaimer/user_responses', 'init');
+
 // Prepare form data.
 $formdata = new stdClass();
 $formdata->userid = $userid;
@@ -119,8 +122,8 @@ $where = !empty($sqlwhere) ? implode(' AND ', $sqlwhere) : '1=1';
 // Define the SQL query to fetch data.
 $fields = 'dl.id, u.id as userid, u.firstname, u.lastname, u.email, ' .
           'd.name as disclaimername, d.context, dl.response, dl.attempt, dl.timecreated';
-$from = '{tool_disclaimer_log} dl
-         JOIN {user} u ON u.id = dl.userid
+$from = '{tool_disclaimer_log} dl 
+         JOIN {user} u ON u.id = dl.userid 
          JOIN {tool_disclaimer} d ON d.id = dl.disclaimerid';
 
 $table->set_sql($fields, $from, $where, $params);
