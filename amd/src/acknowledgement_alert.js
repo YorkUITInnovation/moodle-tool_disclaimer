@@ -25,7 +25,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import ModalFactory from 'core/modal';
+import Modal from 'core/modal';
+import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
 import ajax from 'core/ajax';
 import notification from 'core/notification';
@@ -51,7 +52,7 @@ export const init = async(results) => {
     // objectid is always 0 for acknowledgement-type disclaimers (not course-scoped).
     params.objectid = 0;
 
-    const modal = await ModalFactory.create({
+    const modal = await Modal.create({
         title: params.subject,
         body: Templates.render('tool_disclaimer/disclaimer_modal', params),
         footer: Templates.render('tool_disclaimer/acknowledgement_buttons', {
@@ -59,12 +60,15 @@ export const init = async(results) => {
             disclaimerid: params.id,
         }),
         large: true,
-    });
-
-    // Prevent dismissal via Escape key or clicking the backdrop.
-    modal.getRoot().modal({
         backdrop: 'static',
         keyboard: false,
+    });
+
+    // Remove the header X button once the modal is fully in the DOM.
+    // Using ModalEvents.shown ensures the button exists before we query for it.
+    // getRoot()[0] scopes the selector to this modal only — other modals are unaffected.
+    modal.getRoot().one(ModalEvents.shown, () => {
+        modal.getRoot()[0].querySelectorAll('[data-action="hide"], .btn-close').forEach(el => el.remove());
     });
 
     modal.show();

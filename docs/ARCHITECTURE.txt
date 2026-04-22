@@ -1,0 +1,352 @@
+================================================================================
+                    DISCLAIMER TOOL - ARCHITECTURE
+                    Moodle 5.1 / Bootstrap 5 / York University
+================================================================================
+
+PLUGIN STRUCTURE
+================================================================================
+
+Admin Interface Layer:
+  - index.php              → Display disclaimer list with search/filter
+  - edit_disclaimer.php    → Form for create/update/delete
+  - user_responses.php     → Display/manage user responses with search/filter
+  - reset_response.php     → Confirmation page for resetting user responses
+
+Database Layer:
+  - tool_disclaimer         → Main disclaimer records
+  - tool_disclaimer_role    → Role restrictions per disclaimer (not used for acknowledgement)
+  - tool_disclaimer_log     → User response audit trail
+
+Model Classes (classes/):
+  ├── crud.php             → Abstract CRUD operations
+  ├── disclaimer.php       → Single disclaimer model
+  ├── disclaimers.php      → Collection of disclaimers
+  ├── disclaimer_log.php   → Single response record
+  ├── disclaimer_logs.php  → Collection of responses
+  ├── helper.php           → Page setup, file options
+  └── popup_notification.php → Template renderer
+
+Hook (Moodle 5.1) (classes/hook/output/):
+  └── before_standard_head_html_generation.php  → Fires on every page load
+                                                   for acknowledgement type
+
+External Services (classes/external/):
+  ├── disclaimer_ws.php       → Delete, get_disclaimer
+  ├── roles_ws.php            → Get role list
+  └── user_response_ws.php    → Log user responses
+
+Forms (classes/forms/):
+  ├── edit_disclaimer_form.php
+  ├── disclaimer_filter_form.php
+  └── user_response_filter_form.php
+
+Tables (classes/tables/):
+  ├── disclaimer_table.php
+  └── user_response_table.php
+
+Scheduled Tasks (classes/task/):
+  └── update_published_status.php  → Updates published status by date range
+
+Frontend Layer:
+  ├── JavaScript (amd/src/):
+  │   ├── disclaimer_alert.js       → Accept/Decline/Cancel modal (course, early_alert)
+  │   ├── acknowledgement_alert.js  → OK-only static modal (acknowledgement)
+  │   ├── disclaimers.js            → Admin table interactions
+  │   ├── roles.js                  → Role selection
+  │   └── user_responses.js         → User responses table
+  │
+  ├── Templates (templates/):
+  │   ├── disclaimer_modal.mustache              → Modal content body
+  │   ├── modal_buttons.mustache                 → Yes/No/Cancel buttons
+  │   ├── acknowledgement_buttons.mustache       → OK button only
+  │   └── user_response_action_buttons.mustache  → Reset action button
+  │
+  └── CSS:
+      └── css/general.css
+
+Configuration:
+  ├── db/install.xml    → Schema definition
+  ├── db/access.php     → Capabilities
+  ├── db/services.php   → Web service definitions
+  ├── db/events.php     → Event registration (course_viewed, earlyalert)
+  ├── db/hooks.php      → Moodle 5.1 hook registration (acknowledgement)
+  ├── settings.php      → Admin menu registration
+  ├── eventslib.php     → Event handler functions
+  └── version.php       → Plugin metadata
+
+Docs (docs/):
+  ├── PLUGIN_DOCUMENTATION.md
+  ├── USER_GUIDE.md
+  ├── USER_RESPONSES_FEATURE.md
+  └── ARCHITECTURE.txt  ← this file
+
+================================================================================
+CONTEXT TYPES & DISPLAY TRIGGERS
+================================================================================
+
+course:
+  - Event: core\event\course_viewed
+  - Handler: tool_disclaimer_course_viewed() in eventslib.php
+  - Role restrictions: YES (via tool_disclaimer_role table)
+  - Modal: Accept / Decline / Cancel
+  - objectid: course ID
+  - Redirect on decline: YES (configurable)
+
+early_alert:
+  - Event: earlyalert event (local plugin)
+  - Handler: tool_disclaimer_earlyalert_viewed() in eventslib.php
+  - Role restrictions: YES (via tool_disclaimer_role table)
+  - Modal: Accept / Decline / Cancel
+  - objectid: 0
+  - Redirect on decline: YES (configurable)
+
+acknowledgement:
+  - Trigger: Moodle 5.1 hook before_standard_head_html_generation
+  - Handler: tool_disclaimer\hook\output\before_standard_head_html_generation::callback()
+  - Role restrictions: NO — applies to ALL authenticated non-guest users
+  - Modal: OK only (static backdrop, keyboard: false)
+  - objectid: always 0
+  - Redirect on decline: N/A — cannot be declined
+  - Site admins: still shown (sitewide policy)
+
+================================================================================
+DATA FLOW DIAGRAMS
+================================================================================
+
+CREATION FLOW:
+  Admin → Edit Form → Validation → Insert to DB → Redirect to List
+   ↓        ↓           ↓              ↓
+  UI      Form      Rules        tool_disclaimer
+          Fields    Check        tool_disclaimer_role (if roles assigned)
+
+COURSE/EARLY_ALERT DISPLAY FLOW:
+  User views course / triggers early alert
+    ↓
+  eventslib.php handler fires
+    ↓
+  Is site admin? → YES → Skip
+    ↓ NO
+  Query tool_disclaimer WHERE context='course|early_alert' AND published=1
+    ↓
+  Check tool_disclaimer_role:
+    ├─ Roles set → user must have matching role in course context
+    └─ No roles → applies to all
+    ↓
+  Query tool_disclaimer_log for prior response
+    ├─ response=1 → Skip
+    └─ No record or response≠1 → Show modal
+    ↓
+  $PAGE->requires->js_call_amd('tool_disclaimer/disclaimer_alert', 'init', params)
+    ↓
+  Bootstrap 5 modal: Yes / No / Cancel
+    ↓
+  AJAX: tool_disclaimer_response
+    ↓
+  Insert tool_disclaimer_log (objectid=courseid or 0)
+    ↓
+  Yes → stay | No/Cancel → redirect to redirectto URL
+
+ACKNOWLEDGEMENT DISPLAY FLOW:
+  Any page load (authenticated user)
+    ↓
+  Moodle 5.1 hook callback fires
+    ↓
+  Guest / CLI / AJAX? → Skip
+    ↓ NO
+  Query tool_disclaimer WHERE context='acknowledgement' AND published=1
+    ↓
+  No records? → Skip
+    ↓
+  Check tool_disclaimer_log: response=1, objectid=0 for $USER->id
+    ├─ Acknowledged → Skip
+    └─ Not acknowledged → continue
+    ↓
+  $PAGE->requires->js_call_amd('tool_disclaimer/acknowledgement_alert', 'init', params)
+    ↓
+  Bootstrap 5 static modal: OK only (no X, no dismiss)
+    ↓
+  User clicks OK
+    ↓
+  AJAX: tool_disclaimer_response (response=1, objectid=0)
+    ↓
+  Insert tool_disclaimer_log
+    ↓
+  Modal destroyed — will not appear again
+
+DELETE FLOW:
+  Admin clicks Delete
+    ↓
+  Confirmation dialog
+    ↓
+  AJAX: tool_disclaimer_delete web service
+    ↓
+  DELETE from tool_disclaimer
+  DELETE from tool_disclaimer_role
+  DELETE from tool_disclaimer_log
+    ↓
+  Return to list
+
+USER RESPONSES MANAGEMENT FLOW:
+  Admin visits user_responses.php
+    ↓
+  Enters search/filter criteria (name, context, response status)
+    ↓
+  SQL JOIN: tool_disclaimer_log + user + tool_disclaimer
+    ↓
+  Sortable paginated table (20/page)
+    ↓
+  Admin clicks Reset on a row
+    ↓
+  reset_response.php — confirmation page
+    ↓
+  confirm_sesskey() + require_capability()
+    ↓
+  DELETE FROM tool_disclaimer_log WHERE id=?
+    ↓
+  Redirect to user_responses.php with success notification
+    ↓
+  User will see disclaimer again on next trigger
+
+================================================================================
+RESPONSE VALUES IN tool_disclaimer_log
+================================================================================
+
+response = 0   → Declined / clicked No or Cancel
+response = 1   → Accepted / clicked Yes / clicked OK (acknowledgement)
+response = 2   → Cancelled (treated as decline, redirect triggered)
+response = NULL → No response yet
+
+objectid = 0   → System-wide (acknowledgement type, early_alert type)
+objectid = N   → Course ID (course type)
+
+================================================================================
+ROLE RESTRICTIONS
+================================================================================
+
+If roles are set for a disclaimer (tool_disclaimer_role records exist):
+  → Only users with those roles in the course context see the modal
+
+If no roles are set:
+  → Applies to all users (except site admins for course/early_alert)
+
+For acknowledgement type:
+  → tool_disclaimer_role is IGNORED — hook applies to all authenticated non-guest users
+
+Available role shortnames (from roles_ws.php):
+  student, teacher, editingteacher, manager, coursecreator, guest, user, frontpage
+
+================================================================================
+PUBLICATION CONTROL
+================================================================================
+
+published = 1                      → Disclaimer is active
+published = 0                      → Disclaimer is inactive (never shown)
+
+usepublisheddate = 0               → published field controls status only
+usepublisheddate = 1               → Active only when:
+                                     publishedstart <= NOW AND publishedend >= NOW
+                                     (publishedstart/end are Unix timestamps)
+
+Note: update_published_status scheduled task auto-updates published field by dates.
+
+================================================================================
+PERMISSIONS
+================================================================================
+
+tool/disclaimer:view
+  → View disclaimer list and access admin page
+
+tool/disclaimer:edit
+  → Create/edit disclaimers
+  → Access user responses page
+  → Reset user responses
+
+tool/disclaimer:delete
+  → Delete disclaimers (cascade to roles and logs)
+
+tool/disclaimer:reports
+  → View reports
+
+All require CONTEXT_SYSTEM. Default: Manager role only.
+
+================================================================================
+WEB SERVICES
+================================================================================
+
+Enabled in: db/services.php
+Called via: Moodle AJAX (core/ajax module in AMD)
+
+1. tool_disclaimer_response
+   POST — user responds to a disclaimer
+   Parameters: disclaimerid, userid, response, objectid, attempt
+   For acknowledgement: response=1, objectid=0
+
+2. tool_disclaimer_get_disclaimer
+   GET — retrieve disclaimer details (subject, message, etc.)
+   Parameters: id (disclaimer ID)
+
+3. tool_disclaimer_get_role
+   GET — retrieve roles for role selector autocomplete
+   Parameters: term (search string)
+
+4. tool_disclaimer_delete
+   POST — delete disclaimer and cascade
+   Parameters: id
+   Cascades to: tool_disclaimer_role, tool_disclaimer_log
+
+================================================================================
+MOODLE 5.1 HOOK SYSTEM
+================================================================================
+
+Hook registered in: db/hooks.php
+
+$callbacks = [
+    [
+        'hook'     => \core\hook\output\before_standard_head_html_generation::class,
+        'callback' => \tool_disclaimer\hook\output\before_standard_head_html_generation::class . '::callback',
+        'priority' => 500,
+    ],
+];
+
+This replaces the deprecated 'before_standard_html_head' callback approach.
+The hook fires for every authenticated page load and injects the AMD call
+when an unacknowledged 'acknowledgement' type disclaimer is found.
+
+================================================================================
+JAVASCRIPT ARCHITECTURE (Bootstrap 5 / AMD)
+================================================================================
+
+disclaimer_alert.js (course, early_alert):
+  1. Receive params via js_call_amd
+  2. Call AJAX: tool_disclaimer_get_disclaimer
+  3. Create Bootstrap 5 modal (core/modal)
+  4. Attach button listeners
+  5. Buttons enabled after 2s delay
+  6. On Yes: AJAX tool_disclaimer_response (response=1), stay on page
+  7. On No/Cancel: AJAX tool_disclaimer_response (response=0/2), redirect
+
+acknowledgement_alert.js (acknowledgement):
+  1. Receive params via js_call_amd
+  2. Call AJAX: tool_disclaimer_get_disclaimer
+  3. Create Bootstrap 5 modal with backdrop:'static', keyboard:false
+  4. On ModalEvents.shown: remove all .btn-close and [data-action="hide"]
+  5. Footer from acknowledgement_buttons.mustache (OK button only)
+  6. On OK: AJAX tool_disclaimer_response (response=1, objectid=0)
+  7. Destroy modal + clean Bootstrap 5 backdrop artefacts
+
+IMPORTANT: Use core/modal (Bootstrap 5), NOT core/modal_factory (deprecated Moodle 4.3+)
+
+================================================================================
+FILE STORAGE
+================================================================================
+
+Component: tool_disclaimer
+File area: assets
+Item ID: disclaimer.id
+Served via: lib.php::tool_disclaimer_pluginfile()
+Cache duration: 86400 seconds (24 hours)
+Security:
+  - Context level must be CONTEXT_SYSTEM
+  - Only 'assets' file area accepted
+
+================================================================================
