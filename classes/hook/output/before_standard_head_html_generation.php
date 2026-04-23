@@ -34,7 +34,7 @@ class before_standard_head_html_generation {
      * @param \core\hook\output\before_standard_head_html_generation $hook
      */
     public static function callback(\core\hook\output\before_standard_head_html_generation $hook): void {
-        global $DB, $PAGE, $USER;
+        global $DB, $PAGE, $SESSION, $USER;
 
         if (!isloggedin() || isguestuser()) {
             return;
@@ -44,6 +44,13 @@ class before_standard_head_html_generation {
             return;
         }
         if (defined('AJAX_SCRIPT') && AJAX_SCRIPT) {
+            return;
+        }
+
+        // Never show the acknowledgement modal when an admin is impersonating
+        // another user via "Login as". Accepting on behalf of the target user
+        // would permanently mark their policy as acknowledged.
+        if (!empty($SESSION->realuser)) {
             return;
         }
 

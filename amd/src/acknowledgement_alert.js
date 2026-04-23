@@ -64,16 +64,37 @@ export const init = async(results) => {
         keyboard: false,
     });
 
-    // Remove the header X button once the modal is fully in the DOM.
-    // Using ModalEvents.shown ensures the button exists before we query for it.
-    // getRoot()[0] scopes the selector to this modal only — other modals are unaffected.
+    // Once the modal is fully in the DOM:
+    //  1. Remove the header X / close button.
+    //  2. Set Bootstrap 5 static-backdrop and no-keyboard data attributes directly
+    //     on the .modal element — Moodle's core/modal does not forward the
+    //     backdrop/keyboard options to Bootstrap, so we must set them ourselves.
     modal.getRoot().one(ModalEvents.shown, () => {
-        modal.getRoot()[0].querySelectorAll('[data-action="hide"], .btn-close').forEach(el => el.remove());
+        const root = modal.getRoot()[0];
+
+        // Remove dismiss controls.
+        root.querySelectorAll('[data-action="hide"], .btn-close').forEach(el => el.remove());
+
+        // Force Bootstrap 5 static backdrop + no keyboard dismiss.
+        const modalEl = root.querySelector('.modal');
+        if (modalEl) {
+            modalEl.setAttribute('data-bs-backdrop', 'static');
+            modalEl.setAttribute('data-bs-keyboard', 'false');
+        }
     });
 
     modal.show();
 
     let isClosing = false;
+
+    // Guard: if the modal is hidden by any means other than the OK button
+    // (e.g. Moodle's own backdrop click handler or Escape key), re-show it
+    // immediately so the user cannot dismiss it without acknowledging.
+    modal.getRoot().on(ModalEvents.hidden, () => {
+        if (!isClosing) {
+            modal.show();
+        }
+    });
 
     /**
      * Destroy the modal and clean up any leftover Bootstrap backdrop artefacts.

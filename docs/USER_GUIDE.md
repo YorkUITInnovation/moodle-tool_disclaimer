@@ -118,6 +118,25 @@ Search and filter all user responses. Use the **Reset** button to delete a user'
 - Use role restrictions to target only the relevant audience
 - Test with a non-admin account before publishing widely
 - For the `acknowledgement` type, ensure only one is published at a time
+- **Never test acknowledgements by impersonating a student** — use a real test account instead (see below)
+
+### Impersonation ("Login as") Guard
+
+When a site admin uses Moodle's **"Login as"** to impersonate another user, the `acknowledgement` modal is **suppressed entirely** — it will not appear for the admin while they are acting as the impersonated user.
+
+This is intentional. Clicking OK during impersonation would permanently record the acknowledgement against the **student's** account, even though the student never consented themselves. The acknowledgement is a consent/policy record and must only be accepted by the user in person.
+
+| Scenario | Acknowledgement modal shown? |
+|----------|------------------------------|
+| Normal authenticated user | ✅ Yes (if not yet acknowledged) |
+| Admin impersonating a student | ❌ No — suppressed |
+| Admin on their own session | ✅ Yes (if not yet acknowledged) |
+
+The same guard applies to the **AI policy modal** in `block_ai_assistant` — neither policy modal will fire during impersonation.
+
+> **Testing tip:** To test the acknowledgement flow as a student, use a dedicated test account and log in directly — do not use "Login as".
+
+
 
 ---
 
@@ -229,6 +248,7 @@ $id = $disclaimer->insert_record($data);
 | Problem | Check |
 |---------|-------|
 | Acknowledgement modal not appearing | Is disclaimer published? Is context exactly `acknowledgement`? Purge Moodle caches. Check browser console for AMD errors. |
+| Modal not appearing while testing as a student | Are you using "Login as" impersonation? The modal is intentionally suppressed during impersonation — use a real student test account instead. |
 | Course modal not appearing | Is disclaimer published? Does user's role match role restrictions? Check `tool_disclaimer_log` for existing accepted record. |
 | Modal appears but OK does nothing | Check browser network tab for AJAX errors. Verify `tool_disclaimer_response` web service is enabled. |
 | Modal reappears after acknowledging | Verify `tool_disclaimer_log` record was inserted with `response=1, objectid=0`. |
