@@ -1,5 +1,7 @@
 <?php
 
+$string['acknowledgement'] = 'Acknowledgement (all authenticated users)';
+$string['acknowledgement_context_help'] = 'An acknowledgement disclaimer is shown to every authenticated user on every page until they click OK. It is not course-scoped and requires no role or course selection.';
 $string['cancel'] = 'Cancel';
 $string['change_response'] = 'Change Response';
 $string['context'] = 'Context';
@@ -22,6 +24,7 @@ $string['name'] = 'name';
 $string['new'] = 'New';
 $string['no'] = 'No';
 $string['not_your_disclaimer'] = 'You are trying to access a disclaimer that does not belong to you.';
+$string['ok'] = 'I Acknowledge';
 $string['options'] = 'Options';
 $string['original_message'] = 'Original message';
 $string['pluginname'] = 'Disclaimer';
@@ -36,6 +39,22 @@ $string['system'] = 'System';
 $string['update_published_status'] = 'Update published disclaimer status';
 $string['use_published_date'] = 'Use date range to publish?';
 $string['yes'] = 'Yes';
+
+// User responses page
+$string['accepted'] = 'Accepted';
+$string['actions'] = 'Actions';
+$string['all'] = 'All';
+$string['attempt'] = 'Attempt';
+$string['declined'] = 'Declined';
+$string['disclaimer_name'] = 'Disclaimer Name';
+$string['response_reset_success'] = 'User response has been successfully reset';
+$string['response_status'] = 'Response Status';
+$string['reset_response'] = 'Reset Response';
+$string['reset_response_confirm'] = 'Are you sure you want to reset the disclaimer response for user {$a->username} ({$a->email}) for disclaimer "{$a->disclaimer}" in context "{$a->context}"? This will allow the user to see the disclaimer again.';
+$string['timecreated'] = 'Response Date';
+$string['userid'] = 'User ID';
+$string['userid_help'] = 'Enter the numeric user ID to search for a specific user.';
+$string['user_responses'] = 'User Responses';
 
 
 // Access privileges

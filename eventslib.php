@@ -28,10 +28,19 @@ function tool_disclaimer_course_viewed($event)
     // Get user roles in course
     $roles = get_user_roles($course_context, $USER->id);
 
-    $sql = "SELECT * FROM {tool_disclaimer} WHERE context = 'course'";
-    $sql .= " AND ((published = 1) OR (NOW() BETWEEN publishedstart AND publishedend))";
+    $now = time();
+    $sql = "SELECT * FROM {tool_disclaimer}
+             WHERE context = 'course'
+               AND (
+                     published = 1
+                     OR (usepublisheddate = 1 AND publishedstart <= :now1 AND publishedend >= :now2)
+                   )
+          ORDER BY id ASC";
+    $disclaimers = $DB->get_records_sql($sql, ['now1' => $now, 'now2' => $now], 0, 1);
+    $course_disclaimer = !empty($disclaimers) ? reset($disclaimers) : null;
+
     // Get disclaimer
-    if ($course_disclaimer = $DB->get_record_sql($sql)) {
+    if ($course_disclaimer) {
         $DISCLAIMER = new disclaimer($course_disclaimer->id);
 
         $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ? AND objectid = ? AND response IS NOT NULL";
@@ -89,10 +98,18 @@ function tool_disclaimer_earlyalert_viewed($event)
 
     $data = (object)$event->get_data();
 
-    $sql = "SELECT * FROM {tool_disclaimer} WHERE context = 'early_alert'";
-    $sql .= " AND ((published = 1) OR (NOW() BETWEEN publishedstart AND publishedend))";
+    $now = time();
+    $sql = "SELECT * FROM {tool_disclaimer}
+             WHERE context = 'early_alert'
+               AND (
+                     published = 1
+                     OR (usepublisheddate = 1 AND publishedstart <= :now1 AND publishedend >= :now2)
+                   )
+          ORDER BY id ASC";
+    $disclaimers = $DB->get_records_sql($sql, ['now1' => $now, 'now2' => $now], 0, 1);
+    $early_alert_disclaimer = !empty($disclaimers) ? reset($disclaimers) : null;
 
-    if ($early_alert_disclaimer = $DB->get_record_sql($sql)) {
+    if ($early_alert_disclaimer) {
         // Check if user has already responded to disclaimer
         $user_response_sql = "SELECT * FROM {tool_disclaimer_log} WHERE disclaimerid = ? AND userid = ?";
         $user_responded = $DB->get_record_sql($user_response_sql, array($early_alert_disclaimer->id, $USER->id));

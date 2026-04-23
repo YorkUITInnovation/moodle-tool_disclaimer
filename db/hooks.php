@@ -15,17 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information.
+ * Hook callbacks for tool_disclaimer.
  *
- * @package   tool_disclaimer
- * @copyright 2025 Patrick Thibaudeau <thibaud@yorku.ca>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_disclaimer
+ * @copyright  York University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026042001;           // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2025041400;            // Requires this Moodle version.
-$plugin->component = 'tool_disclaimer';      // Full name of the plugin (used for diagnostics).
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';
+$callbacks = [
+    [
+        'hook'        => \core\hook\output\before_standard_head_html_generation::class,
+        'callback'    => \tool_disclaimer\hook\output\before_standard_head_html_generation::class . '::callback',
+        'priority'    => 500,
+    ],
+];

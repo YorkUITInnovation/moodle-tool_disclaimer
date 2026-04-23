@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,17 +14,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information.
+ * AMD module for the User Responses admin page.
  *
- * @package   tool_disclaimer
- * @copyright 2025 Patrick Thibaudeau <thibaud@yorku.ca>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module     tool_disclaimer/user_responses
+ * @copyright  2026 York University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2026042001;           // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2025041400;            // Requires this Moodle version.
-$plugin->component = 'tool_disclaimer';      // Full name of the plugin (used for diagnostics).
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';
+/**
+ * Initialise the user responses page.
+ */
+export const init = () => {
+    // No client-side behaviour required — the page uses Moodle's table_sql for
+    // filtering and pagination, which is fully server-side.
+};

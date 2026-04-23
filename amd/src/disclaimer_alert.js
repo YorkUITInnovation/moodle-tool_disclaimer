@@ -1,5 +1,5 @@
 import notification from 'core/notification';
-import ModalFactory from 'core/modal';
+import Modal from 'core/modal';
 import Templates from 'core/templates';
 import ajax from 'core/ajax';
 import config from 'core/config';
@@ -13,17 +13,15 @@ export const init = async (results) => {
    var params = await fetchData(results.disclaimerid, results.userid);
    params.objectid = results.objectid;
 
-    const modal = await ModalFactory.create({
+    const modal = await Modal.create({
         title: params.subject,
         body: Templates.render('tool_disclaimer/disclaimer_modal', params),
         footer: Templates.render('tool_disclaimer/modal_buttons', params),
         large: true,
-    });
-    // Prevent the modal from being dismissed when clicking outside
-    modal.getRoot().modal({
         backdrop: 'static',
-        keyboard: false
+        keyboard: false,
     });
+
     modal.show();
 
     let isModalClosing = false;

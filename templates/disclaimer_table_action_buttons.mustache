@@ -1,12 +1,12 @@
 {{#showEditButtons}}
 <a href="{{edit_url}}"
-   class="btn btn-outline-primary btn-sm"
-   title="{{#str}}edit, tool_disclaimer{{/str}}"><i class="fa fa-pencil"></i></a>
+   class="btn btn-outline-primary"
+   title="{{#str}}edit, tool_disclaimer{{/str}}">{{#pix}} t/edit, core {{/pix}}</a>
 {{/showEditButtons}}
 {{#showDelButtons}}
 <button type="button"
-        class="btn btn-outline-danger btn-sm btn-tool-disclaimer-delete-disclaimer"
+        class="btn btn-outline-danger btn-tool-disclaimer-delete-disclaimer"
         title="{{#str}}delete, tool_disclaimer{{/str}}"
         data-id="{{id}}"
-        data-name="{{name}}"><i class="fa fa-trash"></i></button>
+        data-name="{{name}}">{{#pix}} t/delete, core {{/pix}}</button>
 {{/showDelButtons}}
