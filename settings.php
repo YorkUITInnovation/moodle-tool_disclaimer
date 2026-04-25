@@ -21,3 +21,12 @@ $ADMIN->add('tool_disclaimer_category', new admin_externalpage(
     "$CFG->wwwroot/admin/tool/disclaimer/user_responses.php",
     'tool/disclaimer:edit'
 ));
+
+// Add admin withdrawal page under Disclaimers category.
+$ADMIN->add('tool_disclaimer_category', new admin_externalpage(
+    'tool_disclaimer_admin_withdraw',
+    new lang_string('admin_withdraw_menu_label', 'tool_disclaimer'),
+    "$CFG->wwwroot/admin/tool/disclaimer/admin_withdraw_user.php",
+    'tool/disclaimer:withdrawmanage'
+));
+

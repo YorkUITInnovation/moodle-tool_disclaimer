@@ -32,4 +32,12 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+    'tool/disclaimer:withdrawmanage' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
 );

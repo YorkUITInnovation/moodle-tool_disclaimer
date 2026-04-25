@@ -26,6 +26,14 @@ defined('MOODLE_INTERNAL') || die();
 
 $callbacks = [
     [
+        'hook'        => \core_user\hook\extend_user_menu::class,
+        'callback'    => \tool_disclaimer\hook_callbacks::class . '::extend_user_menu',
+    ],
+    [
+        'hook'        => \core\hook\output\before_standard_top_of_body_html_generation::class,
+        'callback'    => \tool_disclaimer\hook_callbacks::class . '::before_standard_top_of_body_html_generation',
+    ],
+    [
         'hook'        => \core\hook\output\before_standard_head_html_generation::class,
         'callback'    => \tool_disclaimer\hook\output\before_standard_head_html_generation::class . '::callback',
         'priority'    => 500,

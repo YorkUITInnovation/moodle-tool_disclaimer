@@ -1,0 +1,28 @@
+<div>
+    <p>{{#str}}withdraw_intro, tool_disclaimer{{/str}}</p>
+
+
+    {{#hasdisclaimers}}
+        <div class="form-check mb-2">
+            <input id="tool-disclaimer-withdraw-all" class="form-check-input" type="checkbox">
+            <label for="tool-disclaimer-withdraw-all" class="form-check-label">{{#str}}withdraw_select_all_disclaimers, tool_disclaimer{{/str}}</label>
+        </div>
+        <div class="border rounded p-2" style="max-height: 260px; overflow-y: auto;">
+            {{#disclaimers}}
+                <div class="form-check">
+                    <input
+                        id="tool-disclaimer-withdraw-item-{{id}}"
+                        class="form-check-input tool-disclaimer-withdraw-item"
+                        type="checkbox"
+                        value="{{id}}"
+                    >
+                    <label for="tool-disclaimer-withdraw-item-{{id}}" class="form-check-label">{{name}} <span class="text-muted">({{context}})</span></label>
+                </div>
+            {{/disclaimers}}
+        </div>
+    {{/hasdisclaimers}}
+
+    {{^hasdisclaimers}}
+        <p class="mb-0">{{#str}}withdraw_none, tool_disclaimer{{/str}}</p>
+    {{/hasdisclaimers}}
+</div>

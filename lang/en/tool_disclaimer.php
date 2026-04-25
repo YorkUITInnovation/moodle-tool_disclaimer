@@ -38,6 +38,29 @@ $string['subject'] = 'Subject';
 $string['system'] = 'System';
 $string['update_published_status'] = 'Update published disclaimer status';
 $string['use_published_date'] = 'Use date range to publish?';
+// User-menu self-service withdrawal strings.
+$string['withdraw_disclaimer'] = 'Withdraw disclaimer';
+$string['withdraw_title'] = 'Withdraw from disclaimers';
+$string['withdraw_intro'] = 'Select which of your accepted disclaimers you want to withdraw from.';
+$string['withdraw_select_all_disclaimers'] = 'All disclaimers';
+$string['withdraw_now'] = 'Withdraw';
+$string['withdraw_confirm_title'] = 'Confirm withdrawal';
+$string['withdraw_confirm_message'] = 'Are you sure you want to withdraw from the selected disclaimers? You will be shown those disclaimers again the next time you visit.';
+$string['withdraw_none'] = 'You have not accepted any disclaimers.';
+$string['withdraw_select_one'] = 'Select at least one disclaimer or choose "All disclaimers".';
+$string['withdraw_success'] = 'Withdrawal completed. Removed {$a} disclaimer response record(s).';
+$string['withdraw_invalid_userid'] = 'Enter a valid user ID greater than zero.';
+
+// Admin withdrawal page (Site Administration -> Users -> Accounts).
+$string['admin_withdraw_menu_label'] = 'Withdraw user disclaimer';
+$string['admin_withdraw_title'] = 'Withdraw disclaimer responses on behalf of a user';
+$string['admin_withdraw_search_heading'] = 'Find user';
+$string['admin_withdraw_search_help'] = 'Search and select a user by name or email, then load their accepted disclaimers.';
+$string['admin_withdraw_userid'] = 'User';
+$string['admin_withdraw_load_user'] = 'Load user';
+$string['admin_withdraw_disclaimers_heading'] = 'Accepted disclaimers';
+$string['admin_withdraw_none'] = 'This user has not accepted any disclaimers.';
+$string['admin_withdraw_confirm_message'] = 'Are you sure you want to withdraw the selected disclaimers for {$a}? The user will be shown those disclaimers again the next time they visit.';
 $string['yes'] = 'Yes';
 
 // User responses page
@@ -62,6 +85,7 @@ $string['disclaimer:delete'] = 'Delete disclaimer record';
 $string['disclaimer:edit'] = 'Edit dsiclaimer record';
 $string['disclaimer:reports'] = 'View disclaimer reports';
 $string['disclaimer:view'] = 'View disclaimer records';
+$string['disclaimer:withdrawmanage'] = 'Withdraw disclaimer responses on behalf of other users';
 
 // Roles
 $string['role_authenticated_user'] = 'Authenticated user';

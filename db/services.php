@@ -37,5 +37,41 @@ $functions = array(
         'capabilities' => '',
         'ajax' => true
     ),
+    'tool_disclaimer_get_withdraw_status' => array(
+        'classname' => 'tool_disclaimer_withdraw_ws',
+        'methodname' => 'get_status',
+        'classpath' => 'admin/tool/disclaimer/classes/external/withdraw_ws.php',
+        'description' => 'Get accepted disclaimers for the current user (self-service)',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true
+    ),
+    'tool_disclaimer_withdraw' => array(
+        'classname' => 'tool_disclaimer_withdraw_ws',
+        'methodname' => 'withdraw',
+        'classpath' => 'admin/tool/disclaimer/classes/external/withdraw_ws.php',
+        'description' => 'Withdraw selected or all disclaimer acknowledgements for the current user (self-service)',
+        'type' => 'write',
+        'capabilities' => '',
+        'ajax' => true
+    ),
+    'tool_disclaimer_manage_get_withdraw_status' => array(
+        'classname' => 'tool_disclaimer_withdraw_ws',
+        'methodname' => 'manage_get_status',
+        'classpath' => 'admin/tool/disclaimer/classes/external/withdraw_ws.php',
+        'description' => 'Admin/manager: get accepted disclaimers for any user',
+        'type' => 'read',
+        'capabilities' => 'tool/disclaimer:withdrawmanage',
+        'ajax' => true
+    ),
+    'tool_disclaimer_manage_withdraw' => array(
+        'classname' => 'tool_disclaimer_withdraw_ws',
+        'methodname' => 'manage_withdraw',
+        'classpath' => 'admin/tool/disclaimer/classes/external/withdraw_ws.php',
+        'description' => 'Admin/manager: withdraw selected or all disclaimers for any user',
+        'type' => 'write',
+        'capabilities' => 'tool/disclaimer:withdrawmanage',
+        'ajax' => true
+    ),
 
 );
