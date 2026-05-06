@@ -22,6 +22,12 @@ localStorage.getItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>')
 localStorage.removeItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>')
 ```
 
+```javascript
+Object.keys(localStorage)
+  .filter(k => k.startsWith('tool_disclaimer_saved_'))
+  .forEach(k => localStorage.removeItem(k));
+```
+
 ## TC-01 First Display for Unacknowledged User
 
 1. Log in as a user with no acknowledgement record.
@@ -40,7 +46,8 @@ Expected:
 
 Expected:
 - `OK` button becomes disabled during save.
-- localStorage transitions to `pending`, then to `saved`.
+- localStorage key is set to `pending` during save.
+- On success, localStorage key is updated to `saved` and remains in browser storage.
 - Modal does not re-appear after reload.
 
 ## TC-03 Cross-Tab Suppression
@@ -52,7 +59,8 @@ Expected:
 
 Expected:
 - After Tab A click, Tab B sees the same localStorage key.
-- Modal does not appear in Tab B while `pending`/`saved` suppression is active.
+- Modal does not appear in Tab B while valid `pending` suppression is active.
+- After save completes and localStorage becomes `saved`, modal stays suppressed in all tabs.
 
 ## TC-04 Save Failure Recovery
 
@@ -89,6 +97,18 @@ Expected:
 Expected:
 - Modal does not display.
 - Hook exits based on DB acknowledgement.
+
+## TC-06b Admin Reset Follow-up (Testing Scenario)
+
+1. Reset a user's acknowledgement via `/admin/tool/disclaimer/reset_response.php`.
+2. Immediately reload a page as that user.
+
+Expected:
+- If localStorage key remains `saved`, modal stays suppressed even after DB reset.
+- Modal appears again only after localStorage key is removed for that browser.
+
+Tester note:
+- For immediate retest after reset, clear the key manually using the console commands above.
 
 ## TC-07 Impersonation Guard (Login As)
 

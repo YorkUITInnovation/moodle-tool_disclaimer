@@ -17,7 +17,7 @@ The **tool_disclaimer** is a Moodle admin tool plugin that enables administrator
 1. **Multiple Disclaimer Types**: `course`, `early_alert`, and `acknowledgement` contexts
 2. **Role-Based Targeting**: Restrict disclaimers to specific user roles (course/early_alert types)
 3. **System-Wide Acknowledgement**: One-click OK modal shown to **all authenticated users** on every page load until acknowledged (acknowledgement type)
-4. **Cross-Tab Suppression Guard**: Uses browser `localStorage` pending/saved states to prevent duplicate acknowledgement prompts across tabs while a save is in-flight
+4. **Cross-Tab Suppression Guard**: Uses browser `localStorage` pending/saved states to prevent duplicate acknowledgement prompts across tabs
 5. **Publication Control**: Set active/inactive status and optional date ranges
 6. **User Consent Tracking**: All responses are logged for compliance
 7. **Flexible Redirect**: Redirect users to specific URLs when they decline (course/early_alert types)
@@ -189,7 +189,7 @@ The hook callback at `classes/hook/output/before_standard_head_html_generation.p
 3. For each unacknowledged disclaimer (checked via `tool_disclaimer_log`), evaluates `localStorage` suppression state
 4. Injects the `acknowledgement_alert` AMD call only when suppression state is not `saved` and not valid `pending`
 5. Invalid/stale suppression payloads are cleared before deciding to show
-4. Only one modal per page load (breaks after first unacknowledged)
+6. Only one modal per page load (breaks after first unacknowledged)
 
 ---
 
@@ -327,6 +327,8 @@ Administrators can search, view, and reset individual user disclaimer responses:
 - **Reset:** Deletes the log entry so the user will be prompted again on next trigger
 
 > Resetting an `acknowledgement` response means the user will see the OK modal again on their next page load.
+>
+> **Testing note:** acknowledgement flow also uses browser `localStorage` key `tool_disclaimer_saved_<disclaimerid>_<userid>`. If a tester still has a `saved` key in their browser profile, the modal remains suppressed after DB reset until that key is removed.
 
 ---
 

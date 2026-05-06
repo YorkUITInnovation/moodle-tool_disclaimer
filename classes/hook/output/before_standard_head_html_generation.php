@@ -75,8 +75,7 @@ class before_standard_head_html_generation {
 
             if (!$acknowledged) {
                 // Use localStorage so suppression works across tabs in the same browser.
-                // A pending value is honoured only for a short time to avoid stale locks if
-                // the acknowledgement request fails or the tab is closed mid-request.
+                // saved = durable browser suppression, pending = short in-flight suppression.
                 $savedkey = 'tool_disclaimer_saved_' . $disclaimer->id . '_' . $USER->id;
                 $initdata = json_encode([
                     'disclaimerid' => (int) $disclaimer->id,

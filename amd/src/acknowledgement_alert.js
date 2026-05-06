@@ -37,7 +37,7 @@ import notification from 'core/notification';
  * @param {Object} results
  * @param {number} results.disclaimerid
  * @param {number} results.userid
- * @param {string} results.savedKey localStorage key set after user acknowledges
+ * @param {string} results.savedKey localStorage key used for acknowledgement suppression
  */
 export const init = async(results) => {
 
@@ -152,6 +152,7 @@ export const init = async(results) => {
                      }
 
                      hideModal();
+                     return null;
                  })
                  .catch(() => {
                      if (typeof localStorage !== 'undefined' && params.savedKey) {
@@ -161,6 +162,8 @@ export const init = async(results) => {
                      if (okbutton) {
                          okbutton.disabled = false;
                      }
+
+                     return null;
                  });
          }
      };
