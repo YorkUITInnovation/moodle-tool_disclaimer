@@ -74,10 +74,49 @@ class before_standard_head_html_generation {
             );
 
             if (!$acknowledged) {
-                $PAGE->requires->js_call_amd('tool_disclaimer/acknowledgement_alert', 'init', [[
-                    'disclaimerid' => (int)$disclaimer->id,
-                    'userid'       => (int)$USER->id,
-                ]]);
+                // Use localStorage so suppression works across tabs in the same browser.
+                // saved = durable browser suppression, pending = short in-flight suppression.
+                $savedkey = 'tool_disclaimer_saved_' . $disclaimer->id . '_' . $USER->id;
+                $initdata = json_encode([
+                    'disclaimerid' => (int) $disclaimer->id,
+                    'userid' => (int) $USER->id,
+                    'savedKey' => $savedkey,
+                ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                $initdatab64 = base64_encode($initdata);
+                $PAGE->requires->js_amd_inline(<<<JS
+(function() {
+    const storagekey = '$savedkey';
+    const initdata = JSON.parse(atob('{$initdatab64}'));
+    let suppressed = false;
+
+    if (typeof localStorage !== 'undefined') {
+        const rawvalue = localStorage.getItem(storagekey);
+
+        if (rawvalue) {
+            try {
+                const payload = JSON.parse(rawvalue);
+
+                if (payload.status === 'saved') {
+                    suppressed = true;
+                } else if (payload.status === 'pending' && payload.expires > Date.now()) {
+                    suppressed = true;
+                } else {
+                    localStorage.removeItem(storagekey);
+                }
+            } catch (e) {
+                localStorage.removeItem(storagekey);
+            }
+        }
+    }
+
+    if (!suppressed) {
+        require(['tool_disclaimer/acknowledgement_alert'], function(m) {
+            m.init(initdata);
+        });
+    }
+})();
+JS
+                );
                 break; // One modal per page load.
             }
         }

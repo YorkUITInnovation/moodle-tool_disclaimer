@@ -1,0 +1,148 @@
+# Acknowledgement Modal Test Cases
+
+This test plan validates acknowledgement disclaimer behaviour, including cross-tab suppression via localStorage and failure recovery.
+
+## Preconditions
+
+- A published disclaimer exists with `context = acknowledgement`.
+- Test user is authenticated and not yet acknowledged for the selected disclaimer.
+- Tests are run in a standard browser profile with DevTools available.
+
+## Useful Console Commands
+
+```javascript
+Object.entries(localStorage).filter(([k]) => k.includes('tool_disclaimer_saved_'))
+```
+
+```javascript
+localStorage.getItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>')
+```
+
+```javascript
+localStorage.removeItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>')
+```
+
+```javascript
+Object.keys(localStorage)
+  .filter(k => k.startsWith('tool_disclaimer_saved_'))
+  .forEach(k => localStorage.removeItem(k));
+```
+
+## TC-01 First Display for Unacknowledged User
+
+1. Log in as a user with no acknowledgement record.
+2. Navigate to any regular page.
+
+Expected:
+- Acknowledgement modal is displayed.
+- Modal has no dismiss X and cannot be dismissed via backdrop or Escape.
+
+## TC-02 Successful Acknowledgement in Same Tab
+
+1. Open modal as in TC-01.
+2. Click `OK` once.
+3. Check localStorage key.
+4. Reload the page.
+
+Expected:
+- `OK` button becomes disabled during save.
+- localStorage key is set to `pending` during save.
+- On success, localStorage key is updated to `saved` and remains in browser storage.
+- Modal does not re-appear after reload.
+
+## TC-03 Cross-Tab Suppression
+
+1. Open Tab A and trigger modal.
+2. Open Tab B to another site page.
+3. In Tab A, click `OK`.
+4. Reload Tab B.
+
+Expected:
+- After Tab A click, Tab B sees the same localStorage key.
+- Modal does not appear in Tab B while valid `pending` suppression is active.
+- After save completes and localStorage becomes `saved`, modal stays suppressed in all tabs.
+
+## TC-04 Save Failure Recovery
+
+1. Trigger modal.
+2. Simulate request failure (offline mode or blocked request).
+3. Click `OK`.
+4. Verify localStorage and reload page.
+
+Note: Could not save acknowledgement error message when blocking *lib/ajax/service.php* in browser to simulate
+
+Expected:
+- Failure notification appears.
+- localStorage suppression key is removed on failure.
+- Modal appears again after reload.
+
+## TC-05 Pending State Expiry Cleanup
+
+Precondition:
+- User is still unacknowledged for the selected disclaimer in the database.
+- If the user already acknowledged it earlier, reset/remove that acknowledgement first; otherwise the page-load cleanup logic may not run and the stale key may remain untouched.
+
+1. Manually set key in localStorage to stale pending payload.
+
+```javascript
+localStorage.setItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>', JSON.stringify({status: 'pending', expires: Date.now() - 1000}))
+```
+
+2. Reload page.
+
+Tester note:
+- Do not click `OK` for this test case. TC-05 validates stale `pending` cleanup on page load only.
+
+Expected:
+- Stale pending key is removed.
+- Modal is shown because suppression is no longer valid.
+
+## TC-06 Already Acknowledged in Database
+
+1. Ensure `tool_disclaimer_log` has `response = 1` and `objectid = 0` for user/disclaimer.
+2. Remove localStorage key if present.
+3. Reload page.
+
+Expected:
+- Modal does not display.
+- Hook exits based on DB acknowledgement.
+
+## TC-06b Admin Reset Follow-up (Testing Scenario)
+
+Precondition:
+- User had previously acknowledged the disclaimer in this browser, so the matching localStorage key may still be set to `saved`.
+
+1. Reset a user's acknowledgement via `/admin/tool/disclaimer/reset_response.php`.
+2. Immediately reload a page as that user.
+
+Expected:
+- If localStorage key remains `saved`, modal stays suppressed even after DB reset.
+- Modal appears again only after localStorage key is removed for that browser.
+
+Tester note:
+- This case verifies that browser-side `saved` suppression can outlive a database reset until the key is cleared locally.
+- For immediate retest after reset, clear the key manually using the console commands above, then reload the page again.
+
+## TC-07 Impersonation Guard (Login As)
+
+1. Log in as admin.
+2. Use `Login as` another user.
+3. Navigate to standard site pages.
+
+Expected:
+- Acknowledgement modal is not injected while impersonating.
+
+## TC-08 One Modal Per Page Load with Multiple Published Acknowledgements
+
+1. Publish multiple acknowledgement disclaimers.
+2. Use a user who has not acknowledged any.
+3. Load a page.
+
+Expected:
+- Only one modal is presented on that page load.
+- Remaining disclaimers can be presented on later page loads according to existing ordering.
+
+## Pass Criteria
+
+All test cases above pass with expected behaviour, and no repeated acknowledgement loops are observed in same-tab or cross-tab usage.
+

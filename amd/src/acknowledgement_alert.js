@@ -37,6 +37,7 @@ import notification from 'core/notification';
  * @param {Object} results
  * @param {number} results.disclaimerid
  * @param {number} results.userid
+ * @param {string} results.savedKey localStorage key used for acknowledgement suppression
  */
 export const init = async(results) => {
 
@@ -45,12 +46,17 @@ export const init = async(results) => {
     try {
         params = await fetchData(results.disclaimerid, results.userid);
     } catch (e) {
-        // fetchData already showed a notification — bail silently.
+        // FetchData already showed a notification — bail silently.
         return;
     }
 
-    // objectid is always 0 for acknowledgement-type disclaimers (not course-scoped).
+    // Objectid is always 0 for acknowledgement-type disclaimers (not course-scoped).
     params.objectid = 0;
+
+    // Pass savedKey through so the click handler can set it on acknowledgement.
+    params.savedKey = results.savedKey;
+
+    const pendingttlms = 5 * 60 * 1000;
 
     const modal = await Modal.create({
         title: params.subject,
@@ -62,6 +68,7 @@ export const init = async(results) => {
         large: true,
         backdrop: 'static',
         keyboard: false,
+        removeOnClose: true,
     });
 
     // Once the modal is fully in the DOM:
@@ -91,13 +98,15 @@ export const init = async(results) => {
     // (e.g. Moodle's own backdrop click handler or Escape key), re-show it
     // immediately so the user cannot dismiss it without acknowledging.
     modal.getRoot().on(ModalEvents.hidden, () => {
-        if (!isClosing) {
+        if (isClosing) {
+            modal.destroy();
+        } else {
             modal.show();
         }
     });
 
     /**
-     * Destroy the modal and clean up any leftover Bootstrap backdrop artefacts.
+     * Hide the modal after acknowledgement has been saved.
      */
     function hideModal() {
         if (isClosing) {
@@ -105,31 +114,59 @@ export const init = async(results) => {
         }
         isClosing = true;
         document.body.removeEventListener('click', clickHandler);
-        modal.destroy();
-        // Bootstrap 5 cleanup.
-        setTimeout(() => {
-            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.paddingRight = '';
-        }, 50);
+        modal.hide();
     }
 
-    /**
-     * Click handler attached to document.body so it catches the footer button
-     * regardless of where Bootstrap renders the modal portal.
-     *
-     * @param {MouseEvent} event
-     */
-    const clickHandler = (event) => {
-        if (isClosing) {
-            return;
-        }
-        if (event.target.closest('#btn-tool-disclaimer-ok')) {
-            // response = 1 (accepted / acknowledged), objectid = 0 (system-wide).
-            saveResponse(params.id, params.userid, 1, 0);
-            hideModal();
-        }
-    };
+     /**
+      * Click handler attached to document.body so it catches the footer button
+      * regardless of where Bootstrap renders the modal portal.
+      *
+      * @param {MouseEvent} event
+      */
+     const clickHandler = function(event) {
+         if (isClosing) {
+             return;
+         }
+         if (event.target.closest('#btn-tool-disclaimer-ok')) {
+             event.preventDefault();
+
+             const okbutton = event.target.closest('#btn-tool-disclaimer-ok');
+             if (okbutton) {
+                 okbutton.disabled = true;
+             }
+
+             if (typeof localStorage !== 'undefined' && params.savedKey) {
+                 localStorage.setItem(params.savedKey, JSON.stringify({
+                     status: 'pending',
+                     expires: Date.now() + pendingttlms,
+                 }));
+             }
+
+             // Response = 1 (accepted / acknowledged), objectid = 0 (system-wide).
+             saveResponse(params.id, params.userid, 1, 0)
+                 .then(() => {
+                     if (typeof localStorage !== 'undefined' && params.savedKey) {
+                         localStorage.setItem(params.savedKey, JSON.stringify({
+                             status: 'saved',
+                         }));
+                     }
+
+                     hideModal();
+                     return null;
+                 })
+                 .catch(() => {
+                     if (typeof localStorage !== 'undefined' && params.savedKey) {
+                         localStorage.removeItem(params.savedKey);
+                     }
+
+                     if (okbutton) {
+                         okbutton.disabled = false;
+                     }
+
+                     return null;
+                 });
+         }
+     };
 
     document.body.addEventListener('click', clickHandler);
 };
@@ -143,12 +180,16 @@ export const init = async(results) => {
  * @param {number} objectid  0 for system-scoped acknowledgements
  */
 function saveResponse(disclaimerid, userid, response, objectid) {
-    const call = ajax.call([{
-        methodname: 'tool_disclaimer_response',
-        args: {userid, disclaimerid, response, objectid},
-    }]);
-    call[0].fail(() => {
-        notification.alert('Could not save acknowledgement');
+    return new Promise((resolve, reject) => {
+        const call = ajax.call([{
+            methodname: 'tool_disclaimer_response',
+            args: {userid, disclaimerid, response, objectid},
+        }]);
+
+        call[0].done(resolve).fail(() => {
+            notification.alert('Could not save acknowledgement');
+            reject();
+        });
     });
 }
 
