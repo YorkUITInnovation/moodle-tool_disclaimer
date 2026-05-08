@@ -69,12 +69,18 @@ Expected:
 3. Click `OK`.
 4. Verify localStorage and reload page.
 
+Note: Could not save acknowledgement error message when blocking *lib/ajax/service.php* in browser to simulate
+
 Expected:
 - Failure notification appears.
 - localStorage suppression key is removed on failure.
 - Modal appears again after reload.
 
 ## TC-05 Pending State Expiry Cleanup
+
+Precondition:
+- User is still unacknowledged for the selected disclaimer in the database.
+- If the user already acknowledged it earlier, reset/remove that acknowledgement first; otherwise the page-load cleanup logic may not run and the stale key may remain untouched.
 
 1. Manually set key in localStorage to stale pending payload.
 
@@ -83,6 +89,9 @@ localStorage.setItem('tool_disclaimer_saved_<DISCLAIMERID>_<USERID>', JSON.strin
 ```
 
 2. Reload page.
+
+Tester note:
+- Do not click `OK` for this test case. TC-05 validates stale `pending` cleanup on page load only.
 
 Expected:
 - Stale pending key is removed.
@@ -100,6 +109,9 @@ Expected:
 
 ## TC-06b Admin Reset Follow-up (Testing Scenario)
 
+Precondition:
+- User had previously acknowledged the disclaimer in this browser, so the matching localStorage key may still be set to `saved`.
+
 1. Reset a user's acknowledgement via `/admin/tool/disclaimer/reset_response.php`.
 2. Immediately reload a page as that user.
 
@@ -108,7 +120,8 @@ Expected:
 - Modal appears again only after localStorage key is removed for that browser.
 
 Tester note:
-- For immediate retest after reset, clear the key manually using the console commands above.
+- This case verifies that browser-side `saved` suppression can outlive a database reset until the key is cleared locally.
+- For immediate retest after reset, clear the key manually using the console commands above, then reload the page again.
 
 ## TC-07 Impersonation Guard (Login As)
 
